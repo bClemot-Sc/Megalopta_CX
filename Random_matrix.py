@@ -40,7 +40,7 @@ def create_connectivity_matrix():
     export_activity_vector(activity_vector, neuron_names, neuron_counts)
 
 
-# ----- Function to export matrix
+## ----- Function to export matrix
 def export_matrix(matrix, neuron_names, neuron_counts):
     # Create headers for rows and columns
     row_headers = [f"{group_name}_{i + 1}" for group_idx, group_name in enumerate(neuron_names) for i in range(neuron_counts[group_idx])]
@@ -53,7 +53,7 @@ def export_matrix(matrix, neuron_names, neuron_counts):
     print(f"Connectivity matrix has been exported to {filename} with row and column headers.")
 
 
-# ----- Function to export activity vector
+## ----- Function to export activity vector
 def export_activity_vector(activity_vector, neuron_names, neuron_counts):
     # Create headers for the activity vector
     headers = [f"{group_name}_{i + 1}" for group_idx, group_name in enumerate(neuron_names) for i in range(neuron_counts[group_idx])]
