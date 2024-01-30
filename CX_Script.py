@@ -22,8 +22,13 @@ CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',', skip_header=1)
 
 
 ## ----- Initialize dataframe for position and orientation
-Dataframe = pd.DataFrame(np.zeros((ARGS.T+1,5)),columns=["X","Y","Orientation","Speed","Rotation"])
-Dataframe.loc[0] = [0,0,0,1,1]
+Df = pd.DataFrame(np.zeros((ARGS.T+1,5)),columns=["X","Y","Orientation","Speed","Rotation"])
+Df.loc[0] = [0,0,0,1,1]
+
+
+## ----- Initialize activity vector
+
+Act = pd.DataFrame(np.zeros((CON_MAT.shape[0],1)))
 
 
 ## ----- Final running function
