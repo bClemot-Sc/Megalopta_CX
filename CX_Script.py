@@ -4,11 +4,9 @@
 ## Test: python CX_Script.py -con connectivity_matrix.csv -act activity_vector.csv -t 2
 
 
-
 ## ----- Import packages
 import numpy as np
 import argparse
-
 
 
 ## ----- Import arguments with argsparse
@@ -17,7 +15,6 @@ parser.add_argument("-con",type=str,help="Path of the file with the connectivity
 parser.add_argument("-act",type=str,help="Path of the file with the ativity vector.")
 parser.add_argument("-t",type=int,help="Simulation time.")
 args = parser.parse_args()
-
 
 
 ## ----- Import connectivity matrix and activity vector
@@ -30,7 +27,6 @@ ACT_IN = np.genfromtxt(args.act, delimiter=',', skip_header=1)
 # print(CON_MAT)
 # print("DEBUG - File import activity:")
 # print(ACT_IN)
-
 
 
 ## ----- Final running function
