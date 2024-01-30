@@ -47,7 +47,7 @@ def export_matrix(matrix, neuron_names, neuron_counts):
     col_headers = row_headers.copy()
 
     # Save the matrix to a CSV file
-    filename = "connectivity_matrix.csv"
+    filename = "random_connectivity_matrix.csv"
     np.savetxt(filename, matrix, delimiter=",", header=",".join(col_headers), comments="", fmt="%d")
 
     print(f"Connectivity matrix has been exported to {filename} with row and column headers.")
@@ -59,7 +59,7 @@ def export_activity_vector(activity_vector, neuron_names, neuron_counts):
     headers = [f"{group_name}_{i + 1}" for group_idx, group_name in enumerate(neuron_names) for i in range(neuron_counts[group_idx])]
 
     # Save the activity vector to a CSV file
-    filename = "activity_vector.csv"
+    filename = "random_activity_vector.csv"
     np.savetxt(filename, activity_vector, delimiter=",", header=",".join(headers), comments="", fmt="%f")
 
     print(f"Activity vector has been exported to {filename} with headers.")
