@@ -1,32 +1,29 @@
 #### Script for modelling and testing the CX
 ## Autor: Bastien Clémot
 ## python CX_Script.py
-## Test: python CX_Script.py -con connectivity_matrix.csv -act activity_vector.csv -t 2
+## Test: python CX_Script.py -CON Theorical_connectivity_matrix.csv -T 100
 
 
 ## ----- Import packages
 import numpy as np
+import pandas as pd
 import argparse
 
 
 ## ----- Import arguments with argsparse
 parser = argparse.ArgumentParser(description="Central Complexe Simulation.")
-parser.add_argument("-con",type=str,help="Path of the file with the connectivity matrix.")
-parser.add_argument("-act",type=str,help="Path of the file with the ativity vector.")
-parser.add_argument("-t",type=int,help="Simulation time.")
-args = parser.parse_args()
+parser.add_argument("-CON",type=str,help="Path of the file with the connectivity matrix.")
+parser.add_argument("-T",type=int,help="Simulation time.")
+ARGS = parser.parse_args()
 
 
 ## ----- Import connectivity matrix and activity vector
-# Connectivity matrix
-CON_MAT = np.genfromtxt(args.con, delimiter=',', skip_header=1)
-# Activity vector
-ACT_IN = np.genfromtxt(args.act, delimiter=',', skip_header=1)
+CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',', skip_header=1)
 
-# print("DEBUG - File import connectivity:")
-# print(CON_MAT)
-# print("DEBUG - File import activity:")
-# print(ACT_IN)
+
+## ----- Initialize dataframe for position and orientation
+Dataframe = pd.DataFrame(np.zeros((ARGS.T+1,5)),columns=["X","Y","Orientation","Speed","Rotation"])
+Dataframe.loc[0] = [0,0,0,1,1]
 
 
 ## ----- Final running function
