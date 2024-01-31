@@ -5,6 +5,7 @@
 
 
 ## ----- Import packages
+import csv
 import numpy as np
 import pandas as pd
 import argparse
@@ -18,7 +19,7 @@ ARGS = parser.parse_args()
 
 
 ## ----- Import connectivity matrix and activity vector
-CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',', skip_header=1)
+CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',')
 
 
 ## ----- Initialize dataframe for position and orientation
@@ -26,9 +27,11 @@ Df = pd.DataFrame(np.zeros((ARGS.T+1,5)),columns=["X","Y","Orientation","Speed",
 Df.loc[0] = [0,0,0,1,1]
 
 
-## ----- Initialize activity vector
-ROW_IDS = pd.read_excel
-Act = pd.DataFrame(np.zeros((CON_MAT.shape[0],1)))
+## ----- Initialize activity dataframe
+file = open("Neurons_IDs.csv", "r")
+COL_IDS = list(csv.reader(file, delimiter=','))
+file.close()
+Act = pd.DataFrame(np.zeros((ARGS.T+1,CON_MAT.shape[0])), columns=COL_IDS)
 
 
 ## ----- Final running function
