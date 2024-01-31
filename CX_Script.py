@@ -27,7 +27,7 @@ Df.loc[0] = [0,0,0,1,1]
 
 
 ## ----- Initialize activity vector
-
+ROW_IDS = pd.read_excel
 Act = pd.DataFrame(np.zeros((CON_MAT.shape[0],1)))
 
 
