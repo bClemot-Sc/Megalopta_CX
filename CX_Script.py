@@ -18,7 +18,7 @@ parser.add_argument("-T",type=int,help="Simulation time.")
 ARGS = parser.parse_args()
 
 
-## ----- Import connectivity matrix and activity vector
+## ----- Import connectivity matrix
 CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',')
 
 
@@ -32,6 +32,14 @@ file = open("Neurons_IDs.csv", "r")
 COL_IDS = list(csv.reader(file, delimiter=','))
 file.close()
 Act = pd.DataFrame(np.zeros((ARGS.T+1,CON_MAT.shape[0])), columns=COL_IDS)
+
+
+## ----- Adjust orientation
+def adjust_orientation(angle):
+    if angle > 360:
+        angle -= 360
+    if angle < 0:
+        angle = 360 + angle
 
 
 ## ----- Final running function
