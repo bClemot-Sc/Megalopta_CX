@@ -40,6 +40,13 @@ def adjust_orientation(angle):
         angle -= 360
     if angle < 0:
         angle = 360 + angle
+    return angle
+
+
+## ----- Logic activation function
+def logic_activation(activity_vector, threshold):
+    output = np.array(activity_vector, dtype=float) > threshold
+    return output.astype(int)
 
 
 ## ----- Final running function
