@@ -45,15 +45,6 @@ def logic_activation(activity_vector, threshold):
     return output.astype(int)
 
 
-## ----- 
-
-
-## ----- Final running function
-def run_simulation(connectivity_matrix, activity_vector, time):
-    
-    # Matrix multiplication
-    result = activity_vector.copy()
-    for _ in range(time):
-        result = np.matmul(connectivity_matrix, result)
-
-    return result
+## ----- Matrix multiplication (activity propagation)
+def matrix_multiplication(connectivity_matrix,activity_vector):
+    return np.dot(connectivity_matrix,activity_vector)
