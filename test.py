@@ -1,12 +1,12 @@
-import numpy as np
+def adjust_orientation(angle):
+    return angle % 360
 
-def threshold_vector(vector, threshold):
-    result = np.array(vector, dtype=float) > threshold
-    return result.astype(int)
+def test_adjust_orientation():
+    angles_to_test = [-720, -450, -360, -180, 0, 90, 180, 270, 360, 450, 720]
 
-# Example usage:
-vector = [1.2, 0.5, 2.3, 0.8, 1.7]
-threshold_value = 1.0
+    for angle in angles_to_test:
+        adjusted_angle = adjust_orientation(angle)
+        print(f"Original Angle: {angle}, Adjusted Angle: {adjusted_angle}")
 
-result = threshold_vector(vector, threshold_value)
-print(result)
+if __name__ == "__main__":
+    test_adjust_orientation()

@@ -5,10 +5,10 @@
 
 
 ## ----- Import packages
+import argparse
 import csv
 import numpy as np
 import pandas as pd
-import argparse
 
 
 ## ----- Import arguments with argsparse
@@ -22,31 +22,30 @@ ARGS = parser.parse_args()
 CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',')
 
 
-## ----- Initialize dataframe for position and orientation
-Df = pd.DataFrame(np.zeros((ARGS.T+1,5)),columns=["X","Y","Orientation","Speed","Rotation"])
-Df.loc[0] = [0,0,0,1,1]
-
-
-## ----- Initialize activity dataframe
-file = open("Neurons_IDs.csv", "r")
-COL_IDS = list(csv.reader(file, delimiter=','))
-file.close()
-Act = pd.DataFrame(np.zeros((ARGS.T+1,CON_MAT.shape[0])), columns=COL_IDS)
+## ----- Initialise agent dataframe and neuron activity dataframe
+def initialise_dataframes(time):
+    # Agent dataframe
+    Df = pd.DataFrame(0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
+    Df.loc[0] = [0, 0, 0, 1, 1]
+    # Activity dataframe
+    with open("Neurons_IDs.csv", "r") as file:
+        COL_IDS = next(csv.reader(file, delimiter=','))
+    Act = pd.DataFrame(0, index=range(time+1), columns=COL_IDS)
+    return Df, Act
 
 
 ## ----- Adjust orientation
 def adjust_orientation(angle):
-    if angle > 360:
-        angle -= 360
-    if angle < 0:
-        angle = 360 + angle
-    return angle
+    return angle % 360
 
 
 ## ----- Logic activation function
 def logic_activation(activity_vector, threshold):
     output = np.array(activity_vector, dtype=float) > threshold
     return output.astype(int)
+
+
+## ----- 
 
 
 ## ----- Final running function
@@ -58,6 +57,3 @@ def run_simulation(connectivity_matrix, activity_vector, time):
         result = np.matmul(connectivity_matrix, result)
 
     return result
-
-# print("DEBUG - Post simulation:")
-# print(run_simulation(CON_MAT,ACT_IN, args.t))
