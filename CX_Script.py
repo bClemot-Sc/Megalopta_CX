@@ -48,6 +48,11 @@ def logic_activation(activity_vector, threshold):
     return output.astype(int)
 
 
+## ----- Linear activation function
+def linear_activation(activity_vector):
+    return np.clip(activity_vector, 0, 1, out=activity_vector)
+
+
 ## ----- Matrix multiplication (activity propagation)
 def matrix_multiplication(connectivity_matrix,activity_vector):
     return np.dot(connectivity_matrix,activity_vector)
@@ -73,13 +78,19 @@ def activity_heatmap(activity_df):
         # Plot heatmap for the subset with dynamic height
         sns.heatmap(subset_df, cmap="inferno", ax=ax, cbar=False)
         # Remove y-axis labels but keep the tick bars
-        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+        ax.set(yticklabels=[])
         ax.set_ylabel(unique_id)
+    # Set x-axis ticks
+    axs[-1].set_xticks(range(0, len(Act_df.columns), len(Act_df.columns) // 10))
     plt.xlabel("Simulation time")
+    # Use autofmt_xdate to adjust x-axis ticks
+    fig.autofmt_xdate()
     # Add colorbar to the right of the subplots
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
     cbar = plt.colorbar(axs[0].collections[0], cax=cbar_ax)
     plt.show()
+
+    
 
 
 ## ----- Cleaning IDs for the heatmap
@@ -94,6 +105,6 @@ if __name__ == "__main__":
     # Time loop
     for i in range(ARGS.T):
         # Update new activity
-        Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold=0.5)
+        Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
     activity_heatmap(Act)
 
