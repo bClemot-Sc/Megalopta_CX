@@ -1,12 +1,5 @@
-def adjust_orientation(angle):
-    return angle % 360
+print(range(5))
 
-def test_adjust_orientation():
-    angles_to_test = [-720, -450, -360, -180, 0, 90, 180, 270, 360, 450, 720]
+result = [x + 1 for x in range(5)]
+print(result)
 
-    for angle in angles_to_test:
-        adjusted_angle = adjust_orientation(angle)
-        print(f"Original Angle: {angle}, Adjusted Angle: {adjusted_angle}")
-
-if __name__ == "__main__":
-    test_adjust_orientation()

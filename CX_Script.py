@@ -25,12 +25,13 @@ CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',')
 ## ----- Initialise agent dataframe and neuron activity dataframe
 def initialise_dataframes(time):
     # Agent dataframe
-    Df = pd.DataFrame(0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
-    Df.loc[0] = [0, 0, 0, 1, 1]
+    Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
+    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 1.0]
     # Activity dataframe
     with open("Neurons_IDs.csv", "r") as file:
         COL_IDS = next(csv.reader(file, delimiter=','))
-    Act = pd.DataFrame(0, index=range(time+1), columns=COL_IDS)
+    Act = pd.DataFrame(0.0, index=range(time+1), columns=COL_IDS)
+    Act.loc[0.0, ["CIU1", "TS"]] = 1.0
     return Df, Act
 
 
@@ -48,3 +49,20 @@ def logic_activation(activity_vector, threshold):
 ## ----- Matrix multiplication (activity propagation)
 def matrix_multiplication(connectivity_matrix,activity_vector):
     return np.dot(connectivity_matrix,activity_vector)
+
+
+## ----- Runing simulation
+if __name__ == "__main__":
+
+    # Initialisation
+    Df, Act = initialise_dataframes(ARGS.T)
+
+    # Time loop
+    for i in range(ARGS.T):
+
+        # Update new activity
+        Act.iloc[i+1] = np.dot(CON_MAT, Act.iloc[i])
+
+    print(Act)
+
+        
