@@ -7,6 +7,7 @@
 ## ----- Import packages
 import argparse
 import csv
+import customtkinter as ctk
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -81,16 +82,12 @@ def activity_heatmap(activity_df):
         ax.set(yticklabels=[])
         ax.set_ylabel(unique_id)
     # Set x-axis ticks
-    axs[-1].set_xticks(range(0, len(Act_df.columns), len(Act_df.columns) // 10))
+    plt.xticks(range(0, len(Act_df.columns), len(Act_df.columns) // 10),range(0, len(Act_df.columns), len(Act_df.columns) // 10))
     plt.xlabel("Simulation time")
-    # Use autofmt_xdate to adjust x-axis ticks
-    fig.autofmt_xdate()
     # Add colorbar to the right of the subplots
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
     cbar = plt.colorbar(axs[0].collections[0], cax=cbar_ax)
     plt.show()
-
-    
 
 
 ## ----- Cleaning IDs for the heatmap
