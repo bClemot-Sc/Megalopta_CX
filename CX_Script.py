@@ -7,8 +7,11 @@
 ## ----- Import packages
 import argparse
 import csv
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
+import seaborn as sns
 
 
 ## ----- Import arguments with argsparse
@@ -51,6 +54,17 @@ def matrix_multiplication(connectivity_matrix,activity_vector):
     return np.dot(connectivity_matrix,activity_vector)
 
 
+## ----- Activity heatmap
+def activity_heatmap(activity_df):
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(10,8))
+    sns.heatmap(Act.T, cmap="viridis")
+    plt.xlabel("Simulation time")
+    plt.ylabel("")
+    plt.title("Evolution of neuronal activity")
+    plt.show()
+
+
 ## ----- Runing simulation
 if __name__ == "__main__":
 
@@ -63,6 +77,5 @@ if __name__ == "__main__":
         # Update new activity
         Act.iloc[i+1] = np.dot(CON_MAT, Act.iloc[i])
 
-    print(Act)
+    activity_heatmap(Act)
 
-        
