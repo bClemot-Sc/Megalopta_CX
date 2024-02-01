@@ -95,13 +95,31 @@ def clean_ids(ids):
     return ids.split("-")[0] if "-" in ids else ''.join(c for c in ids if not c.isdigit())
 
 
-## ----- Runing simulation
+## ----- Implementing GUI
 if __name__ == "__main__":
-    # Initialisation
-    Df, Act = initialise_dataframes(ARGS.T)
-    # Time loop
-    for i in range(ARGS.T):
-        # Update new activity
-        Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
-    activity_heatmap(Act)
+    ctk.set_default_color_theme("green")
+     
+    # Call window
+    root = ctk.CTk()
+    root.geometry("750x450")
+    root.title("CX simulation")
+
+    # Lable widget
+    title_label = ctk.CTkLabel(root, text="• Central Complex Control Panel •", font=ctk.CTkFont(size=30, weight="bold"))
+    title_label.pack(pady=20)
+
+
+    # Main loop
+    root.mainloop()
+
+
+## ----- Runing simulation
+# if __name__ == "__main__":
+#     # Initialisation
+#     Df, Act = initialise_dataframes(ARGS.T)
+#     # Time loop
+#     for i in range(ARGS.T):
+#         # Update new activity
+#         Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
+#     activity_heatmap(Act)
 
