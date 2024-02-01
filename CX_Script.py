@@ -10,7 +10,6 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import seaborn as sns
 
 
@@ -56,26 +55,45 @@ def matrix_multiplication(connectivity_matrix,activity_vector):
 
 ## ----- Activity heatmap
 def activity_heatmap(activity_df):
+    Act_df = activity_df.T
     sns.set(style="whitegrid")
-    plt.figure(figsize=(10,8))
-    sns.heatmap(Act.T, cmap="viridis")
+
+    # Clean all index labels
+    cleaned_ids = [clean_ids(ids) for ids in Act_df.index]
+    # Extract unique cleaned labels for y-axis ticks and sort them
+    unique_ids = list(dict.fromkeys(cleaned_ids))
+    # Remove undesired unique IDs
+    undesired_ids = ["CIU", "TRr", "TRl", "TS"]
+    unique_ids = [ids for ids in unique_ids if ids not in undesired_ids]
+
+    fig, axs = plt.subplots(len(unique_ids), 1, figsize=(14, 7), sharex=True)
+    for ax, unique_id in zip(axs, unique_ids):
+        # Filter data for each unique label using boolean indexing
+        subset_df = Act_df[Act_df.index.map(lambda x: clean_ids(x) == unique_id)]
+        # Plot heatmap for the subset with dynamic height
+        sns.heatmap(subset_df, cmap="inferno", ax=ax, cbar=False)
+        # Remove y-axis labels but keep the tick bars
+        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+        ax.set_ylabel(unique_id)
     plt.xlabel("Simulation time")
-    plt.ylabel("")
-    plt.title("Evolution of neuronal activity")
+    # Add colorbar to the right of the subplots
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
+    cbar = plt.colorbar(axs[0].collections[0], cax=cbar_ax)
     plt.show()
+
+
+## ----- Cleaning IDs for the heatmap
+def clean_ids(ids):
+    return ids.split("-")[0] if "-" in ids else ''.join(c for c in ids if not c.isdigit())
 
 
 ## ----- Runing simulation
 if __name__ == "__main__":
-
     # Initialisation
     Df, Act = initialise_dataframes(ARGS.T)
-
     # Time loop
     for i in range(ARGS.T):
-
         # Update new activity
-        Act.iloc[i+1] = np.dot(CON_MAT, Act.iloc[i])
-
+        Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold=0.5)
     activity_heatmap(Act)
 
