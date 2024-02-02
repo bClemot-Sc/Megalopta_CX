@@ -12,19 +12,19 @@ import pandas as pd
 import seaborn as sns
 
 
-## ----- Import connectivity matrix
+## ----- Import connectivity matrix and IDs list
 CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=',')
+with open("Neurons_IDs.csv", "r") as file:
+        COL_IDS = next(csv.reader(file, delimiter=','))
 
 
 ## ----- Initialise agent dataframe and neuron activity dataframe
-def initialise_dataframes(time):
+def initialise_dataframes(ids_list,time):
     # Agent dataframe
     Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
     Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 1.0]
     # Activity dataframe
-    with open("Neurons_IDs.csv", "r") as file:
-        COL_IDS = next(csv.reader(file, delimiter=','))
-    Act = pd.DataFrame(0.0, index=range(time+1), columns=COL_IDS)
+    Act = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
     Act.loc[0.0, ["CIU1", "TS"]] = 1.0
     return Df, Act
 
@@ -87,12 +87,15 @@ def clean_ids(ids):
 
 
 # ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time):
+def run_function(connectivity_matrix, simulation_time, activation_function, threshold=0.5):
     # Initialisation
-    Df, Act = initialise_dataframes(simulation_time)
+    Df, Act = initialise_dataframes(COL_IDS,simulation_time)
     # Time loop
     for i in range(simulation_time):
         # Update new activity
-        Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
+        if activation_function == "Linear":
+            Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
+        if activation_function == "Logic":
+            Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
     activity_heatmap(Act)
 

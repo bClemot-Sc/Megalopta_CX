@@ -46,6 +46,7 @@ def run_simulation():
         error=1
         k+=1
 
+    THRESHOLD = 0.5
     ACTIVATION = activation_menu.get()
     if ACTIVATION == "Logic":
         try:
@@ -61,59 +62,59 @@ def run_simulation():
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(CX_Script.CON_MAT,TIME)
+        CX_Script.run_function(CX_Script.CON_MAT, TIME, ACTIVATION, THRESHOLD)
 
 
 ## ----- Configure GUI
+if __name__ == "__main__":
+    # Configure theme
+    ctk.set_default_color_theme("green")
+    # Call window
+    root = ctk.CTk()
+    root.geometry("750x500")
+    root.title("CX simulation")
+    # Configure columns
+    root.columnconfigure(0, weight=1)
+    root.columnconfigure(1, weight=2)
 
-# Configure theme
-ctk.set_default_color_theme("green")
-# Call window
-root = ctk.CTk()
-root.geometry("750x500")
-root.title("CX simulation")
-# Configure columns
-root.columnconfigure(0, weight=1)
-root.columnconfigure(1, weight=2)
+    # Title label
+    title_label = ctk.CTkLabel(root, text="Central Complex Control Panel", font=ctk.CTkFont(size=30, weight="bold"))
+    title_label.grid(row=0, column=0, columnspan=2, pady=20)
 
-# Title label
-title_label = ctk.CTkLabel(root, text="Central Complex Control Panel", font=ctk.CTkFont(size=30, weight="bold"))
-title_label.grid(row=0, column=0, columnspan=2, pady=20)
+    # Simulation time label
+    time_label = ctk.CTkLabel(root, text="• Simulation time:", font=ctk.CTkFont(size=20))
+    time_label.grid(row=1, column=0, pady=20, sticky="w", padx=50)
+    # Simulation time entry
+    time_entry = ctk.CTkEntry(root, placeholder_text=500)
+    time_entry.grid(row=1, column=1, sticky="ew", padx=30)
 
-# Simulation time label
-time_label = ctk.CTkLabel(root, text="• Simulation time:", font=ctk.CTkFont(size=20))
-time_label.grid(row=1, column=0, pady=20, sticky="w", padx=50)
-# Simulation time entry
-time_entry = ctk.CTkEntry(root, placeholder_text=500)
-time_entry.grid(row=1, column=1, sticky="ew", padx=30)
+    # Activation function label
+    activation_label = ctk.CTkLabel(root, text="• Activation function:", font=ctk.CTkFont(size=20))
+    activation_label.grid(row=2, column=0, pady=20, sticky="w", padx=50)
+    # Activation function menu
+    activation_var = ctk.StringVar(root)
+    activation_var.set("Linear")
+    activation_menu = ctk.CTkOptionMenu(root, variable=activation_var, values=["Linear", "Logic"])
+    activation_menu.grid(row=2, column=1, sticky="ew", padx=30)
 
-# Activation function label
-activation_label = ctk.CTkLabel(root, text="• Activation function:", font=ctk.CTkFont(size=20))
-activation_label.grid(row=2, column=0, pady=20, sticky="w", padx=50)
-# Activation function menu
-activation_var = ctk.StringVar(root)
-activation_var.set("Linear")
-activation_menu = ctk.CTkOptionMenu(root, variable=activation_var, values=["Linear", "Logic"])
-activation_menu.grid(row=2, column=1, sticky="ew", padx=30)
+    # Threshold condition
+    i_row=0
+    activation_var.trace_add("write", show_threshold)
+    # Threshold label
+    threshold_label = ctk.CTkLabel(root, text="→ Threshold:", font=ctk.CTkFont(size=20))
+    threshold_label.grid_forget()
+    # Threshold entry
+    threshold_entry = ctk.CTkEntry(root, placeholder_text=0.5)
+    threshold_entry.grid_forget()
 
-# Threshold condition
-i_row=0
-activation_var.trace_add("write", show_threshold)
-# Threshold label
-threshold_label = ctk.CTkLabel(root, text="→ Threshold:", font=ctk.CTkFont(size=20))
-threshold_label.grid_forget()
-# Threshold entry
-threshold_entry = ctk.CTkEntry(root, placeholder_text=0.5)
-threshold_entry.grid_forget()
+    # Initialize error labels
+    # Initialize error
+    error1_label = ctk.CTkLabel(root, text="Simulation time value should be a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error2_label = ctk.CTkLabel(root, text="Threshold value should be a float between 0 and 1.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
-# Initialize error labels
-# Initialize error
-error1_label = ctk.CTkLabel(root, text="Simulation time value should be a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
-error2_label = ctk.CTkLabel(root, text="Threshold value should be a float between 0 and 1.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    # Run button
+    run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)
+    run_button.grid(row=3, column=0, columnspan=2, pady=20)
 
-# Run button
-run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)
-run_button.grid(row=3, column=0, columnspan=2, pady=20)
-
-# Main loop
-root.mainloop()
+    # Main loop
+    root.mainloop()
