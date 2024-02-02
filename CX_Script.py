@@ -29,9 +29,14 @@ def initialise_dataframes(ids_list,time):
     return Df, Act
 
 
-## ----- Adjust orientation
-def adjust_orientation(angle):
-    return angle % 360
+## ----- Matrix multiplication (activity propagation)
+def matrix_multiplication(connectivity_matrix,activity_vector):
+    return np.dot(connectivity_matrix,activity_vector)
+
+
+## ----- Linear activation function
+def linear_activation(activity_vector):
+    return np.clip(activity_vector, 0, 1, out=activity_vector)
 
 
 ## ----- Logic activation function
@@ -40,14 +45,17 @@ def logic_activation(activity_vector, threshold):
     return output.astype(int)
 
 
-## ----- Linear activation function
-def linear_activation(activity_vector):
-    return np.clip(activity_vector, 0, 1, out=activity_vector)
+## ----- Adjust orientation
+def adjust_orientation(angle):
+    return angle % 360
 
 
-## ----- Matrix multiplication (activity propagation)
-def matrix_multiplication(connectivity_matrix,activity_vector):
-    return np.dot(connectivity_matrix,activity_vector)
+## ----- Adress heading direction to the right CIU id
+def CIU_activation(heading_direction):
+    heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
+    closest_heading = min(heading_kist, key=lambda x: abs(x - heading_direction))
+    heading_id = heading_list.index(adjust_orientation(closest_heading)) + 1
+    return heading_id
 
 
 ## ----- Activity heatmap
@@ -98,4 +106,6 @@ def run_function(connectivity_matrix, simulation_time, activation_function, thre
         if activation_function == "Logic":
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
     activity_heatmap(Act)
+    print(Act)
+
 
