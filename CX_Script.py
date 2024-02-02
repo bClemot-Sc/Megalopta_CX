@@ -5,7 +5,6 @@
 
 
 ## ----- Import packages
-import argparse
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,15 +12,8 @@ import pandas as pd
 import seaborn as sns
 
 
-## ----- Import arguments with argsparse
-parser = argparse.ArgumentParser(description="Central Complexe Simulation.")
-parser.add_argument("-CON",type=str,help="Path of the file with the connectivity matrix.")
-parser.add_argument("-T",type=int,help="Simulation time.")
-ARGS = parser.parse_args()
-
-
 ## ----- Import connectivity matrix
-CON_MAT = np.genfromtxt(ARGS.CON, delimiter=',')
+CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=',')
 
 
 ## ----- Initialise agent dataframe and neuron activity dataframe
@@ -95,11 +87,11 @@ def clean_ids(ids):
 
 
 # ----- Runing simulation
-if __name__ == "__main__":
+def run_function(connectivity_matrix, simulation_time):
     # Initialisation
-    Df, Act = initialise_dataframes(ARGS.T)
+    Df, Act = initialise_dataframes(simulation_time)
     # Time loop
-    for i in range(ARGS.T):
+    for i in range(simulation_time):
         # Update new activity
         Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
     activity_heatmap(Act)
