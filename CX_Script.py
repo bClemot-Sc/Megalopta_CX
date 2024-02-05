@@ -54,12 +54,26 @@ def adjust_orientation(angle):
     return angle % 360
 
 
-## ----- Adress heading direction to the right CIU id
+## ----- Adress heading direction to CIU neurons
 def CIU_activation(heading_direction):
     heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
     closest_heading = min(heading_list, key=lambda x: abs(x - heading_direction))
     heading_id = heading_list.index(adjust_orientation(closest_heading)) + 1
     return str(heading_id)
+
+
+## ----- Adress turning direction to TR neuronss
+def compare_headings(previous_heading, new_heading):
+    TRr = 0
+    TRl = 0
+    heading_difference = (new_heading - previous_heading) % 360
+    if heading_difference == 0:
+        pass
+    elif heading_difference <= 180:
+        TRl = 1.0
+    else:
+        TRr = 1.0
+    return TRl, TRr
 
 
 ## ----- Update position with translational speed and orientation
@@ -74,7 +88,7 @@ def update_position(x,y,translational_speed, orientation, noise_factor):
 def update_orientation(orientation, rotational_speed, noise_factor):
     random_component = random.gauss(0,45)
     new_orientation = orientation + (rotational_speed + noise_factor * random_component)
-    return new_orientation
+    return adjust_orientation(new_orientation)
 
 
 ## ----- Activity heatmap
@@ -124,7 +138,7 @@ def plot_stirring(Df):
     plt.show()
 
 
-# ----- Runing simulation
+## ----- Runing simulation
 def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold):
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
@@ -133,6 +147,13 @@ def run_function(connectivity_matrix, simulation_time, activation_function, nois
     for i in range(simulation_time):
         # Update CIU activity input
         Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
+        # Update TS activity input (should be improved)
+        Act.loc[i, "TS"] = Df.loc[i, "Speed"]
+        # Update TR activity input (should be improved)
+        if i==0:
+            pass
+        else:
+            Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
         # Update new activity
         if activation_function == "Linear":
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
