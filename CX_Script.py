@@ -6,6 +6,7 @@
 
 ## ----- Import packages
 import csv
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -58,6 +59,16 @@ def CIU_activation(heading_direction):
     return heading_id
 
 
+## ----- Update position with translational speed and orientation
+def update_position(x,y,translational_speed, orientation):
+    new_x = x + (translational_speed * math.cos(orientation))
+    new_y = y + (translational_speed * math.sin(orientation))
+    return new_x, new_y
+
+
+
+
+
 ## ----- Activity heatmap
 def activity_heatmap(activity_df):
     Act_df = activity_df.T
@@ -106,6 +117,5 @@ def run_function(connectivity_matrix, simulation_time, activation_function, thre
         if activation_function == "Logic":
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
     activity_heatmap(Act)
-    print(Act)
 
 
