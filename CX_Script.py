@@ -23,7 +23,7 @@ with open("Neurons_IDs.csv", "r") as file:
 def initialise_dataframes(ids_list,time):
     # Agent dataframe
     Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
-    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 1.0]
+    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 45.0]
     # Activity dataframe
     Act = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
     Act.loc[0.0, ["CIU1", "TS"]] = 1.0
@@ -66,7 +66,10 @@ def update_position(x,y,translational_speed, orientation):
     return new_x, new_y
 
 
-
+## ----- Update orientation 
+def update_orientation(orientation, rotational_speed):
+    new_orientation = orientation + rotational_speed
+    return new_orientation
 
 
 ## ----- Activity heatmap
