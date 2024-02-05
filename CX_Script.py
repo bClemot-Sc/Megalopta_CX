@@ -24,10 +24,12 @@ with open("Neurons_IDs.csv", "r") as file:
 def initialise_dataframes(ids_list,time):
     # Agent dataframe
     Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
-    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 0.0]
+
+    # TO REMOVE LATER
+    Df.loc[:,"Speed"] = 1.0
+
     # Activity dataframe
     Act = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
-    Act.loc[0.0, ["CIU1", "TS"]] = 1.0
     return Df, Act
 
 
@@ -57,7 +59,7 @@ def CIU_activation(heading_direction):
     heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
     closest_heading = min(heading_kist, key=lambda x: abs(x - heading_direction))
     heading_id = heading_list.index(adjust_orientation(closest_heading)) + 1
-    return heading_id
+    return str(heading_id)
 
 
 ## ----- Update position with translational speed and orientation
@@ -112,16 +114,28 @@ def clean_ids(ids):
 
 
 # ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, activation_function, threshold=0.5, noise_factor):
+def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold=0.5):
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
+
     # Time loop
     for i in range(simulation_time):
+        # Update CIU activity input
+        Act.loc[i, "CIU" + CIU_activation(Df.loc(i, "Orientation"))] = 1
         # Update new activity
         if activation_function == "Linear":
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
         if activation_function == "Logic":
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
+        # Update Orientation and position
+        Df.iloc[i+1, "Orientation"] = update_orientation(Df.iloc[i,"Orientation"],Df.iloc[i,"Rotation"], noise_factor)
+        new_x, new_y = update_position(Df.iloc[i,"x"],Df.iloc[i,"y"],Df.iloc[i,"Speed"],Df.iloc[i+1,"Orientation"],noise_factor)
+        Df.loc[i+1, "x"] = new_x
+        Df.loc[i+1, "y"] = new_y
+
     activity_heatmap(Act)
+    print(Act)
+    print("blabla")
+    print(Df)
 
 
