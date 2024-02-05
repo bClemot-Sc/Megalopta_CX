@@ -10,6 +10,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import random
 import seaborn as sns
 
 
@@ -23,7 +24,7 @@ with open("Neurons_IDs.csv", "r") as file:
 def initialise_dataframes(ids_list,time):
     # Agent dataframe
     Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
-    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 45.0]
+    Df.loc[0] = [0.0, 0.0, 0.0, 1.0, 0.0]
     # Activity dataframe
     Act = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
     Act.loc[0.0, ["CIU1", "TS"]] = 1.0
@@ -60,15 +61,17 @@ def CIU_activation(heading_direction):
 
 
 ## ----- Update position with translational speed and orientation
-def update_position(x,y,translational_speed, orientation):
-    new_x = x + (translational_speed * math.cos(orientation))
-    new_y = y + (translational_speed * math.sin(orientation))
+def update_position(x,y,translational_speed, orientation, noise_factor):
+    random_component = random.gauss(0,1)
+    new_x = x + ((translational_speed + noise_factor * random_component) * math.cos(orientation))
+    new_y = y + ((translational_speed + noise_factor * random_component) * math.sin(orientation))
     return new_x, new_y
 
 
 ## ----- Update orientation 
-def update_orientation(orientation, rotational_speed):
-    new_orientation = orientation + rotational_speed
+def update_orientation(orientation, rotational_speed, noise_factor):
+    random_component = random.gauss(0,45)
+    new_orientation = orientation + (rotational_speed + noise_factor * random_component)
     return new_orientation
 
 
@@ -109,7 +112,7 @@ def clean_ids(ids):
 
 
 # ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, activation_function, threshold=0.5):
+def run_function(connectivity_matrix, simulation_time, activation_function, threshold=0.5, noise_factor):
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
     # Time loop
