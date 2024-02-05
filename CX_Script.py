@@ -26,7 +26,7 @@ def initialise_dataframes(ids_list,time):
     Df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
 
     # TO REMOVE LATER
-    Df.loc[:,"Speed"] = 1.0
+    Df["Speed"] = 1.0
 
     # Activity dataframe
     Act = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
@@ -113,6 +113,17 @@ def clean_ids(ids):
     return ids.split("-")[0] if "-" in ids else ''.join(c for c in ids if not c.isdigit())
 
 
+## ----- Graphical representation for stirring
+def plot_stirring(Df):
+    plt.plot(Df['X'], Df['Y'], linestyle='-')
+    plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen', label='Start')
+    plt.scatter(Df['X'].iloc[-1], Df['Y'].iloc[-1], color='red', label='End')
+    plt.xlabel('X-coordinate')
+    plt.ylabel('Y-coordinate')
+    plt.grid(True)
+    plt.show()
+
+
 # ----- Runing simulation
 def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold):
     # Initialisation
@@ -133,7 +144,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, nois
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
 
+    # Graphical output
     activity_heatmap(Act)
-    print(Act)
-    print("blabla")
-    print(Df)
+    plot_stirring(Df)
+
