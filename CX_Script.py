@@ -114,7 +114,7 @@ def clean_ids(ids):
 
 
 # ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold=0.5):
+def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold):
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
 
@@ -134,3 +134,6 @@ def run_function(connectivity_matrix, simulation_time, activation_function, nois
         Df.loc[i+1, "Y"] = new_y
 
     activity_heatmap(Act)
+    print(Act)
+    print("blabla")
+    print(Df)
