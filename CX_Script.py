@@ -57,7 +57,7 @@ def adjust_orientation(angle):
 ## ----- Adress heading direction to the right CIU id
 def CIU_activation(heading_direction):
     heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
-    closest_heading = min(heading_kist, key=lambda x: abs(x - heading_direction))
+    closest_heading = min(heading_list, key=lambda x: abs(x - heading_direction))
     heading_id = heading_list.index(adjust_orientation(closest_heading)) + 1
     return str(heading_id)
 
@@ -121,21 +121,16 @@ def run_function(connectivity_matrix, simulation_time, activation_function, nois
     # Time loop
     for i in range(simulation_time):
         # Update CIU activity input
-        Act.loc[i, "CIU" + CIU_activation(Df.loc(i, "Orientation"))] = 1
+        Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
         # Update new activity
         if activation_function == "Linear":
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
         if activation_function == "Logic":
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
         # Update Orientation and position
-        Df.iloc[i+1, "Orientation"] = update_orientation(Df.iloc[i,"Orientation"],Df.iloc[i,"Rotation"], noise_factor)
-        new_x, new_y = update_position(Df.iloc[i,"x"],Df.iloc[i,"y"],Df.iloc[i,"Speed"],Df.iloc[i+1,"Orientation"],noise_factor)
-        Df.loc[i+1, "x"] = new_x
-        Df.loc[i+1, "y"] = new_y
+        Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i,"Rotation"], noise_factor)
+        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"],noise_factor)
+        Df.loc[i+1, "X"] = new_x
+        Df.loc[i+1, "Y"] = new_y
 
     activity_heatmap(Act)
-    print(Act)
-    print("blabla")
-    print(Df)
-
-
