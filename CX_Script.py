@@ -139,14 +139,15 @@ def plot_stirring(Df):
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, activation_function, noise_factor, threshold):
+def run_function(connectivity_matrix, simulation_time, activation_function, time_period, noise_factor, threshold):
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
 
     # Time loop
     for i in range(simulation_time):
         # Update CIU activity input
-        Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
+        if time_period == "Day":
+            Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
         # Update TS activity input (should be improved)
         Act.loc[i, "TS"] = Df.loc[i, "Speed"]
         # Update TR activity input (should be improved)
@@ -161,7 +162,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, nois
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
         # Update Orientation and position
         Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i,"Rotation"], noise_factor)
-        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"],noise_factor)
+        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
 
