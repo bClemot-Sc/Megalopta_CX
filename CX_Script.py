@@ -77,10 +77,10 @@ def compare_headings(previous_heading, new_heading):
 
 
 ## ----- Update position with translational speed and orientation
-def update_position(x,y,translational_speed, orientation, noise_factor):
+def update_position(x,y,translational_speed, orientation):
     random_component = random.gauss(0,1)
-    new_x = x + ((translational_speed + noise_factor * random_component) * math.cos(orientation))
-    new_y = y + ((translational_speed + noise_factor * random_component) * math.sin(orientation))
+    new_x = x + (translational_speed * math.cos(orientation))
+    new_y = y + (translational_speed * math.sin(orientation))
     return new_x, new_y
 
 
