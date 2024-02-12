@@ -78,9 +78,8 @@ def compare_headings(previous_heading, new_heading):
 
 ## ----- Update position with translational speed and orientation
 def update_position(x,y,translational_speed, orientation):
-    random_component = random.gauss(0,1)
-    new_x = x + (translational_speed * math.cos(orientation))
-    new_y = y + (translational_speed * math.sin(orientation))
+    new_x = x + (translational_speed * math.cos(math.radians(orientation)))
+    new_y = y + (translational_speed * math.sin(math.radians(orientation)))
     return new_x, new_y
 
 
@@ -162,7 +161,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
             Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
         # Update Orientation and position
         Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i,"Rotation"], noise_factor)
-        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
+        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i,"Orientation"])
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
 
