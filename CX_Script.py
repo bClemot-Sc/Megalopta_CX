@@ -33,6 +33,11 @@ def initialise_dataframes(ids_list,time):
     return Df, Act
 
 
+## ----- Adjust orientation
+def adjust_orientation(angle):
+    return angle % 360
+
+
 ## ----- Matrix multiplication (activity propagation)
 def matrix_multiplication(connectivity_matrix,activity_vector):
     return np.dot(connectivity_matrix,activity_vector)
@@ -47,11 +52,6 @@ def linear_activation(activity_vector):
 def logic_activation(activity_vector, threshold):
     output = np.array(activity_vector, dtype=float) > threshold
     return output.astype(int)
-
-
-## ----- Adjust orientation
-def adjust_orientation(angle):
-    return angle % 360
 
 
 ## ----- Adress heading direction to CIU neurons
@@ -145,7 +145,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
     # Time loop
     for i in range(simulation_time):
         # Update CIU activity input
-        if time_period == "Day":
+        if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
             Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
         # Update TS activity input (should be improved)
         Act.loc[i, "TS"] = Df.loc[i, "Speed"]
