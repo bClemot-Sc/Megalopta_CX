@@ -1,6 +1,6 @@
-import numpy as np
-matrice_originale = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-nouvelle_matrice = np.copy(matrice_originale)
-nouvelle_matrice[0, 0] = 100
-print("Matrice d'origine :\n", matrice_originale)
-print("Nouvelle matrice :\n", nouvelle_matrice)
+my_range = [float(i) / 100 for i in range(5, 105, 5)]
+print(my_range)
+
+
+for i in range(0.05,1,0.05):
+    print (i)

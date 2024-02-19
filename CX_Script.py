@@ -1,7 +1,5 @@
 #### Script for modelling and testing the CX
 ## Autor: Bastien Clémot
-## python CX_Script.py
-## Test: python CX_Script.py -CON Theorical_connectivity_matrix.csv -T 100
 
 
 ## ----- Import packages
@@ -20,9 +18,12 @@ with open("Neurons_IDs.csv", "r") as file:
         COL_IDS = next(csv.reader(file, delimiter=','))
 
 
+## ----- Get IDs index
+IND_PFL = [i for i, element in enumerate(COL_IDS) if "PFL" in element]
+IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
+
+
 ## ----- Create alternative matrix for exploration when no food (no hd → PFL)
-IND_PFL = [i for i, element in enumerate(COL_IDS) if 'PFL' in element]
-IND_HD = [i for i, element in enumerate(COL_IDS) if 'hd' in element]
 ALT_MAT = np.copy(CON_MAT)
 for i in IND_PFL:
     ALT_MAT[i,IND_HD] = 0
@@ -58,7 +59,7 @@ def CIU_activation(heading_direction):
     return str(heading_id)
 
 
-## ----- Adress turning direction to TR neuronss
+## ----- Adress turning direction to TR neurons
 def compare_headings(previous_heading, new_heading):
     TRr = 0
     TRl = 0
@@ -66,9 +67,9 @@ def compare_headings(previous_heading, new_heading):
     if heading_difference == 0:
         pass
     elif heading_difference <= 180:
-        TRl = 1.0
+        TRl = 0.05
     else:
-        TRr = 1.0
+        TRr = 0.05
     return TRl, TRr
 
 
@@ -135,6 +136,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
 
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
+    expected_EPG = pd.DataFrame(0.0, index=range(simulation_time+1), columns=(range(16)))
 
     # Time loop
     for i in range(simulation_time):
@@ -142,6 +144,11 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
         # Update CIU activity input
         if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
             Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
+
+        # Save real orientation
+        real_orientation = [0] * 8
+        real_orientation[int(CIU_activation(Df.loc[i, "Orientation"]))-1] = 1
+        expected_EPG.iloc[i] = real_orientation * 2
 
         # Update TS activity input (should be improved)
         Act.loc[i, "TS"] = Df.loc[i, "Speed"]
@@ -169,7 +176,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
             if activation_function == "Logic":
                 Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
 
-        # Update rotational speed from PFl neurons
+        # Update rotational speed from PFL neurons
         Df.loc[i+1,"Rotation"] = Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()
 
         # Update Orientation and position
