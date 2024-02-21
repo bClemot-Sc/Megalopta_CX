@@ -67,9 +67,9 @@ def compare_headings(previous_heading, new_heading):
     if heading_difference == 0:
         pass
     elif heading_difference <= 180:
-        TRl = 0.05
+        TRl = 0.44
     else:
-        TRr = 0.05
+        TRr = 0.44
     return TRl, TRr
 
 
