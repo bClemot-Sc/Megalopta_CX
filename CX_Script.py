@@ -51,10 +51,11 @@ def logic_activation(activity_vector, threshold):
     return output.astype(int)
 
 
-## ----- Adress heading direction to CIU neurons
+## ----- Adress heading direction (relative to a South landscape cue) to CIU neurons
 def CIU_activation(heading_direction):
+    relative_heading = (-heading_direction) % 360
     heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
-    closest_heading = min(heading_list, key=lambda x: abs(x - heading_direction))
+    closest_heading = min(heading_list, key=lambda x: abs(x - relative_heading))
     heading_id = heading_list.index(closest_heading % 360) + 1
     return str(heading_id)
 
@@ -67,9 +68,9 @@ def compare_headings(previous_heading, new_heading):
     if heading_difference == 0:
         pass
     elif heading_difference <= 180:
-        TRl = 0.44
+        TRl = 0.13
     else:
-        TRr = 0.44
+        TRr = 0.13
     return TRl, TRr
 
 
@@ -123,8 +124,8 @@ def activity_heatmap(activity_df):
 ## ----- Graphical representation for stirring
 def plot_stirring(Df):
     plt.plot(Df['X'], Df['Y'], linestyle='-')
-    plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen', label='Start')
-    plt.scatter(Df['X'].iloc[-1], Df['Y'].iloc[-1], color='red', label='End')
+    plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen')
+    plt.scatter(Df['X'].iloc[-1], Df['Y'].iloc[-1], color='red')
     plt.xlabel('X-coordinate')
     plt.ylabel('Y-coordinate')
     plt.grid(True)
