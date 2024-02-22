@@ -1,0 +1,81 @@
+Results for the heading direction circuit (PEN neurons excluded) obtained with different algorithms.
+
+----- POWELL (Only day, 200 it.) -----
+
+Best gain values: [0.         0.         0.         0.32304044 0.68296663 0.78006163
+ 0.3864509  0.         0.44296203]
+Minimal error: 113.46988674720882
+Runing time: 23.044663429260254
+
+Best gain values: [0.         0.         0.         0.67564023 0.23079853 0.82461291
+ 0.46895581 0.         0.69964259]
+Minimal error: 118.32319490214732
+Runing time: 21.347663402557373
+
+Best gain values: [0.         0.         0.         0.56777849 0.65623059 0.41277174
+ 0.78753882 0.         0.38415249]
+Minimal error: 99.62357604764338
+Runing time: 22.15307879447937
+
+
+----- NELDER-MEAD (Only day, 200 it.) -----
+
+Best gain values: [0.         0.         0.         0.44768919 0.28046517 0.6704084
+ 0.69425618 0.         0.4377111 ]
+Minimal error: 175.71661988761397
+Runing time: 17.77377939224243
+
+Best gain values: [0.         0.         0.         0.63627775 0.62652079 0.66195058
+ 0.80153618 0.         0.41544548]
+Minimal error: 143.10635148721536
+Runing time: 22.66473364830017
+
+Best gain values: [0.         0.         0.         0.64698505 0.92354089 0.88640134
+ 0.16203341 0.         0.74868264]
+Minimal error: 182.3619171057668
+Runing time: 23.543250560760498
+
+
+----- POWELL options={'maxiter': 1000} (Only day, 200 it.) -----
+
+Best gain values: [0.         0.         0.         0.43630512 0.24850357 0.69458454
+ 0.38160802 0.         0.26296827]
+Minimal error: 98.46305510813431
+Runing time: 29.553499221801758
+
+Best gain values: [0.         0.         0.         0.31246118 0.41269409 0.65335637
+ 0.78753882 0.         0.44380274]
+Minimal error: 111.61298585531094
+Runing time: 32.108415842056274
+
+Best gain values: [0.         0.         0.         0.2314873  0.46581593 0.65623059
+ 0.44376941 0.         0.65627124]
+Minimal error: 105.3162989303416
+Runing time: 22.24825954437256
+
+
+----- POWELL MULTI START 10 (Only day, 200 it.) -----
+
+Best gain values: [0.         0.         0.         0.39361413 0.42416205 0.30793868
+ 0.65623059 0.         0.30062112]
+Minimal error: 82.42357167977386
+Message: Optimization terminated successfully.
+Success: True
+Runing time: 294.35399079322815
+
+Best gain values: [0.         0.         0.         0.44351738 0.44332177 0.59617026
+ 0.5813909  0.         0.44525656]
+Minimal error: 101.73520725031764
+Message: Optimization terminated successfully.
+Success: True
+Runing time: 303.0373361110687
+
+
+----- POWELL MULTI START 500 (Only day, 200 it.)
+
+Best gain values: [0.         0.         0.         0.23589023 0.6833506  0.78753882
+ 0.44376941 0.         0.88784938]
+Minimal error: 89.89533080924805
+Message: Optimization terminated successfully.
+Success: True
+Runing time: 19658.783172369003
