@@ -1,6 +1,6 @@
-Results for the heading direction circuit (PEN neurons excluded) obtained with different algorithms.
+• Results for the heading direction circuit (PEN neurons excluded) obtained with different algorithms.
 
------ POWELL (Only day, 100 it.) -----
+----- POWELL (Only day, 100 it.) 
 
 Best gain values: [0.         0.         0.         0.32304044 0.68296663 0.78006163
  0.3864509  0.         0.44296203]
@@ -18,7 +18,7 @@ Minimal error: 99.62357604764338
 Runing time: 22.15307879447937
 
 
------ NELDER-MEAD (Only day, 100 it.) -----
+----- NELDER-MEAD (Only day, 100 it.) 
 
 Best gain values: [0.         0.         0.         0.44768919 0.28046517 0.6704084
  0.69425618 0.         0.4377111 ]
@@ -36,7 +36,7 @@ Minimal error: 182.3619171057668
 Runing time: 23.543250560760498
 
 
------ POWELL options={'maxiter': 1000} (Only day, 100 it.) -----
+----- POWELL options={'maxiter': 1000} (Only day, 100 it.)
 
 Best gain values: [0.         0.         0.         0.43630512 0.24850357 0.69458454
  0.38160802 0.         0.26296827]
@@ -54,7 +54,7 @@ Minimal error: 105.3162989303416
 Runing time: 22.24825954437256
 
 
------ POWELL MULTI START 10 (Only day, 100 it.) -----
+----- POWELL MULTI START 10 (Only day, 100 it.)
 
 Best gain values: [0.         0.         0.         0.39361413 0.42416205 0.30793868
  0.65623059 0.         0.30062112]
@@ -97,3 +97,13 @@ Minimal error: 106.76975149951318
 Message: Optimization terminated successfully.
 Success: True
 Runing time: 2120.241402387619
+
+===== NEW CONNECTIVITY PATTERN
+
+----- POWELL MULTI START 10 (Day/Night, 100it. (50+50) only PEN connections explored)
+Best gain values: [0.78004561 0.11587735 0.10743889 0.6653288  0.15311276 0.56239554
+ 0.62713866 0.66786078 0.48284496]
+Minimal error: 107.2623210016519
+Message: Optimization terminated successfully.
+Success: True
+Runing time: 486.53764939308167

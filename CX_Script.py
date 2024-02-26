@@ -25,8 +25,7 @@ IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
 
 ## ----- Create alternative matrix for exploration when no food (no hd → PFL)
 ALT_MAT = np.copy(CON_MAT)
-for i in IND_PFL:
-    ALT_MAT[i,IND_HD] = 0
+ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
 
 
 ## ----- Initialise agent dataframe and neuron activity dataframe
@@ -68,9 +67,9 @@ def compare_headings(previous_heading, new_heading):
     if heading_difference == 0:
         pass
     elif heading_difference <= 180:
-        TRl = 0.13
+        TRl = 1
     else:
-        TRr = 0.13
+        TRr = 1
     return TRl, TRr
 
 
@@ -108,7 +107,7 @@ def activity_heatmap(activity_df):
         # Filter data for each unique label using boolean indexing
         subset_df = Act_df[Act_df.index.map(lambda x: clean_ids(x) == unique_id)]
         # Plot heatmap for the subset with dynamic height
-        sns.heatmap(subset_df, cmap="inferno", ax=ax, cbar=False)
+        sns.heatmap(subset_df, vmin=0, vmax=1, cmap="inferno", ax=ax, cbar=False)
         # Remove y-axis labels but keep the tick bars
         ax.set(yticklabels=[])
         ax.set_ylabel(unique_id)
