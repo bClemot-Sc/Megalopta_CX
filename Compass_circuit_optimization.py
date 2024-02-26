@@ -44,7 +44,7 @@ def compare_headings_v2(previous_heading, new_heading, gain):
 
 ## ----- Model function
 def model(params):
-    epg_to_pen, pen_to_epg, tr_to_pen, epg_to_peg, peg_to_epg, epg_to_d7, d7_to_peg, d7_to_pen, d7_to_d7 = params
+    ciu_to_epg,epg_to_pen, pen_to_epg, tr_to_pen, epg_to_peg, peg_to_epg, epg_to_d7, d7_to_peg, d7_to_pen, d7_to_d7 = params
 
     # Create matrix with the new gains
     ALT_MAT = np.copy(CON_MAT)
@@ -66,14 +66,14 @@ def model(params):
     Df, Act_df = initialise_dataframes(COL_IDS,SIM_TIME)
     Act = Act_df.iloc[:,index]
     Act = Act.copy()
-    expected_EPG = pd.DataFrame(0.0, index=range(SIM_TIME+1), columns=range(16))
+    expected = pd.DataFrame(0.0, index=range(SIM_TIME+1), columns=range(16))
 
     # Time loop
     for i in range(SIM_TIME):
 
         # Update CIU activity input
         if i<(SIM_TIME/2):
-            Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
+            Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = ciu_to_epg
                                         
         # Update TR activity input
         if i==0:
@@ -83,8 +83,16 @@ def model(params):
 
         # Save real orientation
         real_orientation = [0] * 8
-        real_orientation[int(CIU_activation(Df.loc[i, "Orientation"]))-1] = 1
-        expected_EPG.iloc[i] = real_orientation * 2
+        compass_index = int(CIU_activation(Df.loc[i, "Orientation"]))-1
+        real_orientation[compass_index] = 1
+        
+        # Shape expected sinusoid shape
+        real_orientation[compass_index-2] = 0.2
+        real_orientation[compass_index-1] = 0.6
+        if compass_index >= 6:
+            real_orientation[compass_index-7] = 0.6
+            real_orientation[compass_index-6] = 0.2
+        expected.iloc[i] = real_orientation * 2
 
         # Update activity vector with connectivity matrix
         Act.iloc[i+1] = linear_activation(np.dot(SUB_MAT,Act.iloc[i]))
@@ -92,27 +100,41 @@ def model(params):
         # Update orientation
         Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],0, 0.4)
 
-    # Compare simulation with expected EPG
+    # Compare simulation with expected shape
     sim_err = 0
-    for j in range(int(SIM_TIME/2)):
+    for j in range(int(SIM_TIME-3)):
+        # EPG
         epg_sim = np.array(Act.iloc[j, Act.columns.get_loc("EPG1"):Act.columns.get_loc("EPG16")+1])
-        epg_exp = np.array(expected_EPG.iloc[j])
+        epg_exp = np.array(expected.iloc[j+1])
         sim_err += np.sum(np.abs(epg_sim - epg_exp))
+        # PEG
+        peg_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEG1"):Act.columns.get_loc("PEG16")+1])
+        peg_exp = np.array(expected.iloc[j+2])
+        sim_err += np.sum(np.abs(peg_sim - peg_exp))
+        # d7
+        d7_sim = np.array(Act.iloc[j, Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16")+1])
+        d7_exp = np.array(expected.iloc[j+2])
+        sim_err += np.sum(np.abs(d7_sim - d7_exp))
+        # PEN
+        pen_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEN1"):Act.columns.get_loc("PEN16")+1])
+        pen_exp = np.array(expected.iloc[j+2])
+        sim_err += np.sum(np.abs(pen_sim - pen_exp))
             
     return sim_err
 
 
 ## ----- Define parameters 
 param_constraints = (
-    (0, 0),  # epg_to_pen
-    (0, 0),  # pen_to_epg
-    (0, 0),  # tr_to_pen
-    (0.1, 1.0),  # epg_to_peg
-    (0.1, 1.0),  # peg_to_epg
-    (0.1, 1.0),  # epg_to_d7
-    (0.1, 1.0),  # d7_to_peg
-    (0, 0),  # d7_to_pen
-    (0.1, 1.0)  # d7_to_d7
+    (0.0, 1.1),  # ciu_to_epg
+    (0.0, 1.1),  # epg_to_pen
+    (0.0, 1.1),  # pen_to_epg
+    (0.0, 1.1),  # tr_to_pen
+    (0.0, 1.1),  # epg_to_peg
+    (0.0, 1.1),  # peg_to_epg
+    (0.0, 1.1),  # epg_to_d7
+    (0.0, 1.1),  # d7_to_peg
+    (0.0, 1.1),  # d7_to_pen
+    (0.0, 1.1)  # d7_to_d7
 )
 
 

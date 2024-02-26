@@ -154,7 +154,7 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
         Act.loc[i, "TS"] = Df.loc[i, "Speed"]
 
         # Update TR activity input (should be improved)
-        if i==0:
+        if i<5:
             pass
         else:
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
