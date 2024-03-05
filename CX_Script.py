@@ -116,9 +116,9 @@ def activity_heatmap(activity_df):
 
 ## ----- Graphical representation for stirring
 def plot_stirring(Df):
-    plt.plot(Df['X'], Df['Y'], linestyle='-')
+    plt.plot(Df['Y'], -Df['X'], linestyle='-')
     plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen')
-    plt.scatter(Df['X'].iloc[-1], Df['Y'].iloc[-1], color='red')
+    plt.scatter(Df['Y'].iloc[-1], -Df['X'].iloc[-1], color='red')
     plt.xlabel('X-coordinate')
     plt.ylabel('Y-coordinate')
     plt.grid(True)
