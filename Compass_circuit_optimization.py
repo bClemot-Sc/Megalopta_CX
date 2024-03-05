@@ -138,23 +138,44 @@ param_constraints = (
 )
 
 
-## Multi start optimization algorithm
-best_result = None
-for _ in range(10):
-    # Initial conditions (random)
-    initial_params = [np.random.uniform(low, high) for low, high in param_constraints]
-    # Optimization algorithm
-    result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
-    if best_result is None or result.fun < best_result.fun:
-        best_result = result
+# ## ----- Multi start optimization algorithm
+# best_result = None
+# for _ in range(10):
+#     # Initial conditions (random)
+#     initial_params = [np.random.uniform(low, high) for low, high in param_constraints]
+#     # Optimization algorithm
+#     result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
+#     if best_result is None or result.fun < best_result.fun:
+#         best_result = result
 
 
-## ----- Final output
-# Afficher les résultats
-print("Best gain values:", best_result.x)
-print("Minimal error:", best_result.fun)
-print("Message:", best_result.message)
-print("Success:", best_result.success)
+# ## ----- Final output
+# # Afficher les résultats
+# print("Best gain values:", best_result.x)
+# print("Minimal error:", best_result.fun)
+# print("Message:", best_result.message)
+# print("Success:", best_result.success)
+
+
+## ----- Driven optimization algorithm
+print("==========")
+initial_params = [
+    1.0,  # ciu_to_epg
+    0.1,  # epg_to_pen
+    0.4,  # pen_to_epg
+    0.8,  # tr_to_pen
+    0.7,  # epg_to_peg
+    0.4,  # peg_to_epg
+    1.0,  # epg_to_d7
+    1.0,  # d7_to_peg
+    1.0,  # d7_to_pen
+    1.0  # d7_to_d7
+]
+result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
+print("Driven gain values:", result.x)
+print("Minimal error:", result.fun)
+print("Message:", result.message)
+print("Success:", result.success)
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Runing time:", elapsed_time)

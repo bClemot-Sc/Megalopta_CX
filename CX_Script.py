@@ -82,7 +82,7 @@ def update_position(x,y,translational_speed, orientation):
 
 ## ----- Update orientation 
 def update_orientation(orientation, rotational_speed, noise_factor):
-    random_component = random.gauss(0,45)
+    random_component = random.gauss(0,5)
     new_orientation = orientation + (rotational_speed + noise_factor * random_component)
     return new_orientation % 360
 
@@ -177,13 +177,15 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
                 Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
 
         # Update rotational speed from PFL neurons
-        Df.loc[i+1,"Rotation"] = Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()
+        Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
         # Update Orientation and position
         Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_factor)
         new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
+
+        print(Df.loc[i,"Rotation"])
 
     # Graphical output
     activity_heatmap(Act)
