@@ -44,12 +44,6 @@ def linear_activation(activity_vector):
     return np.clip(activity_vector, 0, 1, out=activity_vector)
 
 
-## ----- Logic activation function
-def logic_activation(activity_vector, threshold):
-    output = np.array(activity_vector, dtype=float) > threshold
-    return output.astype(int)
-
-
 ## ----- Adress heading direction (relative to a South landscape cue) to CIU neurons
 def CIU_activation(heading_direction):
     relative_heading = (-heading_direction) % 360
@@ -81,9 +75,9 @@ def update_position(x,y,translational_speed, orientation):
 
 
 ## ----- Update orientation 
-def update_orientation(orientation, rotational_speed, noise_factor):
-    random_component = random.gauss(0,5)
-    new_orientation = orientation + (rotational_speed + noise_factor * random_component)
+def update_orientation(orientation, rotational_speed, noise_deviation):
+    random_component = random.gauss(0,noise_deviation)
+    new_orientation = orientation + rotational_speed +  random_component
     return new_orientation % 360
 
 
@@ -132,7 +126,7 @@ def plot_stirring(Df):
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, activation_function, time_period, noise_factor, threshold):
+def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation):
 
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
@@ -163,29 +157,21 @@ def run_function(connectivity_matrix, simulation_time, activation_function, time
         if (i < simulation_time/2):
 
             # Update new activity with no hd → PFL (Alternative connectivity matrix)
-            if activation_function == "Linear":
-                Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
-            if activation_function == "Logic":
-                Act.iloc[i+1] = logic_activation(np.dot(ALT_MAT, Act.iloc[i]), threshold)
+            Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
         else:
 
             # Update new activity with complete connectivity matrix
-            if activation_function == "Linear":
-                Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
-            if activation_function == "Logic":
-                Act.iloc[i+1] = logic_activation(np.dot(CON_MAT, Act.iloc[i]), threshold)
+            Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
 
         # Update rotational speed from PFL neurons
         Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
         # Update Orientation and position
-        Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_factor)
+        Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
         new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
-
-        print(Df.loc[i,"Rotation"])
 
     # Graphical output
     activity_heatmap(Act)
