@@ -18,8 +18,8 @@ def show_parameters(*args):
         radius_entry.grid_forget()
         food_label.grid_forget()
         food_entry.grid_forget()
-        timer_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
-        timer_entry.grid(row=5, column=1, sticky="ew", padx=30)
+        timer_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
+        timer_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
 
     elif selected_option == "Till border exploration":
@@ -27,8 +27,8 @@ def show_parameters(*args):
         food_entry.grid_forget()
         timer_label.grid_forget()
         timer_entry.grid_forget()
-        radius_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
-        radius_entry.grid(row=5, column=1, sticky="ew", padx=30)
+        radius_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
+        radius_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
 
     elif selected_option == "Food seeking":
@@ -36,12 +36,12 @@ def show_parameters(*args):
         radius_entry.grid_forget()
         timer_label.grid_forget()
         timer_entry.grid_forget()
-        food_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
-        food_entry.grid(row=5, column=1, sticky="ew", padx=30)
+        food_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
+        food_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
 
     # Adjust other widgets position
-    run_button.grid(row=5+i_row, column=0, columnspan=2, pady=20)
+    run_button.grid(row=6+i_row, column=0, columnspan=2, pady=20)
 
 # Check for missing inputs and run simulation
 def run_simulation():
@@ -54,31 +54,42 @@ def run_simulation():
     error3_label.grid_forget()
     error4_label.grid_forget()
     error5_label.grid_forget()
+    error6_label.grid_forget()
 
     # Check for inputs and issues
     try:
         TIME = int(time_entry.get())
         if TIME <=0:
-                error1_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error1_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1
     except ValueError:
-        error1_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+        error1_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
         error=1
         k+=1
 
     try:
         NOISE = float(noise_entry.get())
         if not 0.0 <= NOISE <= 90.0:
-                error2_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error2_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
     except ValueError:
-        error2_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+        error2_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
         error=1
         k+=1
 
-    
+    try:
+        NEST = float(nest_entry.get())
+        if not 0.0 <= NEST:
+                error6_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error=1
+                k+=1 
+    except ValueError:
+        error6_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+        error=1
+        k+=1
+
     PARADIGM = paradigm_menu.get()
 
     TIMER = 250
@@ -86,11 +97,11 @@ def run_simulation():
         try:
             TIMER = int(timer_entry.get())
             if not 0.0 <= TIMER <= TIME:
-                error5_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error5_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
         except ValueError:
-            error5_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+            error5_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
             k+=1
 
@@ -99,11 +110,11 @@ def run_simulation():
         try:
             RADIUS = float(radius_entry.get())
             if not 0.0 <= RADIUS:
-                error3_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error3_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
         except ValueError:
-            error3_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+            error3_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
             k+=1 
     
@@ -112,11 +123,11 @@ def run_simulation():
         try:
             FOOD = int(food_entry.get())
             if not 0.0 <= FOOD:
-                error4_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error4_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
         except ValueError:
-            error4_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+            error4_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
             k+=1         
 
@@ -124,7 +135,7 @@ def run_simulation():
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, PARADIGM, TIMER, RADIUS, FOOD)
+        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, NEST, PARADIGM, TIMER, RADIUS, FOOD)
 
 
 ## ----- Configure GUI
@@ -133,7 +144,7 @@ if __name__ == "__main__":
     ctk.set_default_color_theme("green")
     # Call window
     root = ctk.CTk()
-    root.geometry("950x650")
+    root.after(0, lambda:root.state('zoomed'))
     root.title("CX simulation")
     # Configure columns
     root.columnconfigure(0, weight=1)
@@ -164,24 +175,31 @@ if __name__ == "__main__":
     noise_entry = ctk.CTkEntry(root, placeholder_text=10)
     noise_entry.grid(row=3, column=1, sticky="ew", padx=30)
 
+    # Nest size label
+    nest_label = ctk.CTkLabel(root, text="• Nest size:", font=ctk.CTkFont(size=20))
+    nest_label.grid(row=4, column=0, pady=20, sticky="w", padx=50)
+    # Nest size entry
+    nest_entry = ctk.CTkEntry(root, placeholder_text=20)
+    nest_entry.grid(row=4, column=1, sticky="ew", padx=30)
+
     # Paradigm label
     paradigm_label = ctk.CTkLabel(root, text="• Paradigm:", font=ctk.CTkFont(size=20))
-    paradigm_label.grid(row=4, column=0, pady=20, sticky="w", padx=50)
+    paradigm_label.grid(row=5, column=0, pady=20, sticky="w", padx=50)
     # Paradigm menu
     paradigm_var = ctk.StringVar(root)
     paradigm_var.set("Timed exploration")
     paradigm_menu = ctk.CTkOptionMenu(root, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking"])
-    paradigm_menu.grid(row=4, column=1, sticky="ew", padx=30)
+    paradigm_menu.grid(row=5, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters
     i_row=0
     paradigm_var.trace_add("write", show_parameters)
     # Timer label
     timer_label = ctk.CTkLabel(root, text="→ Time before homing behaviour:", font=ctk.CTkFont(size=20))
-    timer_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
+    timer_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
     # Timer entry
     timer_entry = ctk.CTkEntry(root, placeholder_text=250)
-    timer_entry.grid(row=5, column=1, sticky="ew", padx=30)
+    timer_entry.grid(row=6, column=1, sticky="ew", padx=30)
     # Radius label
     radius_label = ctk.CTkLabel(root, text="→ Border radius:", font=ctk.CTkFont(size=20))
     radius_label.grid_forget()
@@ -202,10 +220,11 @@ if __name__ == "__main__":
     error3_label = ctk.CTkLabel(root, text="Radius value should be a a positive float.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error4_label = ctk.CTkLabel(root, text="Number of food source should be a a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error5_label = ctk.CTkLabel(root, text="Timer before homing behaviour should be a positive integer lower or equal to maximum simulation time.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error6_label = ctk.CTkLabel(root, text="Nest size should be a positive float value.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
     # Run button
     run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)
-    run_button.grid(row=6, column=0, columnspan=2, pady=20)
+    run_button.grid(row=7, column=0, columnspan=2, pady=20)
 
     # Main loop
     root.mainloop()

@@ -13,9 +13,9 @@ import seaborn as sns
 
 
 ## ----- Import connectivity matrix and IDs list
-CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=',')
+CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
 with open("Neurons_IDs.csv", "r") as file:
-        COL_IDS = next(csv.reader(file, delimiter=','))
+        COL_IDS = next(csv.reader(file, delimiter=","))
 
 
 ## ----- Get IDs index
@@ -100,7 +100,7 @@ def activity_heatmap(activity_df):
     sns.set(style="whitegrid")
     # Processings IDs function
     def clean_ids(ids):
-        return ids.split("-")[0] if "-" in ids else ''.join(c for c in ids if not c.isdigit())
+        return ids.split("-")[0] if "-" in ids else "".join(c for c in ids if not c.isdigit())
     # Clean all index labels
     cleaned_ids = [clean_ids(ids) for ids in Act_df.index]
     # Extract unique cleaned labels for y-axis ticks and sort them
@@ -128,24 +128,29 @@ def activity_heatmap(activity_df):
 
 
 ## ----- Graphical representation for stirring
-def plot_stirring(Df, paradigm, radius):
-    plt.plot(Df['Y'], -Df['X'], linestyle='-')
-    plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen')
-    plt.scatter(Df['Y'].iloc[-1], -Df['X'].iloc[-1], color='red')
-    plt.xlabel('X-coordinate')
-    plt.ylabel('Y-coordinate')
+def plot_stirring(Df, nest_size, paradigm, radius):
+
+    # Plot the agent journey
+    plt.plot(Df["Y"], -Df["X"], linestyle="-")
+    plt.scatter(Df["Y"].iloc[-1], -Df["X"].iloc[-1], color="red")
+    
+    # Plot the nest size
+    nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
+    plt.gca().add_patch(nest)
 
     # Check paradigm for border representation
     if paradigm == "Till border exploration":
-        circle = plt.Circle((0, 0), radius, color='grey', fill=False)
-        plt.gca().add_patch(circle)
-    
+        border = plt.Circle((0, 0), radius, color="grey", fill=False)
+        plt.gca().add_patch(border)
+
+    plt.xlabel("X-coordinate")
+    plt.ylabel("Y-coordinate")
     plt.grid(True)
     plt.show()
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, paradigm, timer, radius, food):
+def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food):
 
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
@@ -200,11 +205,11 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1, "Y"] = new_y
 
         # Stop simulation when the agent has returned to the nest
-        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<50 and goal_gate == 1:
+        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and goal_gate == 1:
             break
 
     # Graphical output
     Act = Act.iloc[:(i+2)]
     Df = Df.iloc[:(i+3)]
     activity_heatmap(Act)
-    plot_stirring(Df, paradigm, radius)
+    plot_stirring(Df, nest_size, paradigm, radius)
