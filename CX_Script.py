@@ -19,11 +19,19 @@ with open("Neurons_IDs.csv", "r") as file:
 
 
 ## ----- Get IDs index
+IND_PEN = [i for i, element in enumerate(COL_IDS) if "PEN" in element]
+IND_EPG = [i for i, element in enumerate(COL_IDS) if "EPG" in element]
+IND_PEG = [i for i, element in enumerate(COL_IDS) if "PEG" in element]
+IND_TR = [i for i, element in enumerate(COL_IDS) if "TR" in element]
+IND_D7 = [i for i, element in enumerate(COL_IDS) if "d7-" in element]
+IND_CIU = [i for i, element in enumerate(COL_IDS) if "CIU" in element]
+IND_PFN = [i for i, element in enumerate(COL_IDS) if "PFN" in element]
 IND_PFL = [i for i, element in enumerate(COL_IDS) if "PFL" in element]
 IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
+IND_TS = [i for i, element in enumerate(COL_IDS) if "TS" in element]
 
 
-## ----- Create alternative matrix for exploration when no food (no hd → PFL)
+## ----- Create alternative matrix for exploration when no food (no hd → PFL) (MODIFY LATER)
 ALT_MAT = np.copy(CON_MAT)
 ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
 
@@ -126,7 +134,7 @@ def plot_stirring(Df):
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation):
+def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, paradigm, radius, food):
 
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)

@@ -18,11 +18,15 @@ def show_parameters(*args):
         radius_entry.grid_forget()
         food_label.grid_forget()
         food_entry.grid_forget()
-        i_row = 0
+        timer_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
+        timer_entry.grid(row=5, column=1, sticky="ew", padx=30)
+        i_row = 1
 
     elif selected_option == "Till border exploration":
         food_label.grid_forget()
         food_entry.grid_forget()
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
         radius_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
         radius_entry.grid(row=5, column=1, sticky="ew", padx=30)
         i_row = 1
@@ -30,6 +34,8 @@ def show_parameters(*args):
     elif selected_option == "Food seeking":
         radius_label.grid_forget()
         radius_entry.grid_forget()
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
         food_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
         food_entry.grid(row=5, column=1, sticky="ew", padx=30)
         i_row = 1
@@ -47,6 +53,7 @@ def run_simulation():
     error2_label.grid_forget()
     error3_label.grid_forget()
     error4_label.grid_forget()
+    error5_label.grid_forget()
 
     # Check for inputs and issues
     try:
@@ -71,8 +78,23 @@ def run_simulation():
         error=1
         k+=1
 
-    RADIUS = 200
+    
     PARADIGM = paradigm_menu.get()
+
+    TIMER = 250
+    if PARADIGM == "Timed exploration":
+        try:
+            TIMER = int(timer_entry.get())
+            if not 0.0 <= TIMER <= TIME:
+                error5_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error=1
+                k+=1 
+        except ValueError:
+            error5_label.grid(row=7+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+            error=1
+            k+=1
+
+    RADIUS = 200
     if PARADIGM == "Till border exploration":
         try:
             RADIUS = float(radius_entry.get())
@@ -102,7 +124,7 @@ def run_simulation():
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE)
+        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, PARADIGM, RADIUS, FOOD)
 
 
 ## ----- Configure GUI
@@ -111,7 +133,7 @@ if __name__ == "__main__":
     ctk.set_default_color_theme("green")
     # Call window
     root = ctk.CTk()
-    root.geometry("750x650")
+    root.geometry("950x650")
     root.title("CX simulation")
     # Configure columns
     root.columnconfigure(0, weight=1)
@@ -154,6 +176,12 @@ if __name__ == "__main__":
     # Paradigm parameters
     i_row=0
     paradigm_var.trace_add("write", show_parameters)
+    # Timer label
+    timer_label = ctk.CTkLabel(root, text="→ Time before homing behaviour:", font=ctk.CTkFont(size=20))
+    timer_label.grid(row=5, column=0, pady=20, sticky="w", padx=70)
+    # Timer entry
+    timer_entry = ctk.CTkEntry(root, placeholder_text=250)
+    timer_entry.grid(row=5, column=1, sticky="ew", padx=30)
     # Radius label
     radius_label = ctk.CTkLabel(root, text="→ Border radius:", font=ctk.CTkFont(size=20))
     radius_label.grid_forget()
@@ -173,10 +201,11 @@ if __name__ == "__main__":
     error2_label = ctk.CTkLabel(root, text="Noise range value should be a float between 0 and 90.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error3_label = ctk.CTkLabel(root, text="Radius value should be a a positive float.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error4_label = ctk.CTkLabel(root, text="Number of food source should be a a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error5_label = ctk.CTkLabel(root, text="Timer before homing behaviour should be a positive integer lower or equal to maximum simulation time.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
     # Run button
     run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)
-    run_button.grid(row=5, column=0, columnspan=2, pady=20)
+    run_button.grid(row=6, column=0, columnspan=2, pady=20)
 
     # Main loop
     root.mainloop()
