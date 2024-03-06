@@ -52,6 +52,11 @@ def linear_activation(activity_vector):
     return np.clip(activity_vector, 0, 1, out=activity_vector)
 
 
+## ----- Compute euclidian distance between two points
+def euclidian_distance(x1,y1,x2,y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+
 ## ----- Adress heading direction (relative to a South landscape cue) to CIU neurons
 def CIU_activation(heading_direction):
     relative_heading = (-heading_direction) % 360
@@ -123,22 +128,29 @@ def activity_heatmap(activity_df):
 
 
 ## ----- Graphical representation for stirring
-def plot_stirring(Df):
+def plot_stirring(Df, paradigm, radius):
     plt.plot(Df['Y'], -Df['X'], linestyle='-')
     plt.scatter(Df['X'].iloc[0], Df['Y'].iloc[0], color='lightgreen')
     plt.scatter(Df['Y'].iloc[-1], -Df['X'].iloc[-1], color='red')
     plt.xlabel('X-coordinate')
     plt.ylabel('Y-coordinate')
+
+    # Check paradigm for border representation
+    if paradigm == "Till border exploration":
+        circle = plt.Circle((0, 0), radius, color='grey', fill=False)
+        plt.gca().add_patch(circle)
+    
     plt.grid(True)
     plt.show()
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, paradigm, radius, food):
+def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, paradigm, timer, radius, food):
 
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
     expected_EPG = pd.DataFrame(0.0, index=range(simulation_time+1), columns=(range(16)))
+    goal_gate = 0
 
     # Time loop
     for i in range(simulation_time):
@@ -161,14 +173,20 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         else:
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
-        # Activate homing vector halfway through the simulation
-        if (i < simulation_time/2):
+        # Update activity vector with connectivity matrix depending on the paradigm
+        if paradigm == "Timed exploration" and i<timer:
+
+            # Update new activity with no hd → PFL (Alternative connectivity matrix)
+            Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
+
+        elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])<radius and goal_gate == 0:
 
             # Update new activity with no hd → PFL (Alternative connectivity matrix)
             Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
         else:
-
+            
+            goal_gate = 1
             # Update new activity with complete connectivity matrix
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
 
@@ -181,6 +199,12 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y
 
+        # Stop simulation when the agent has returned to the nest
+        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<50 and goal_gate == 1:
+            break
+
     # Graphical output
+    Act = Act.iloc[:(i+2)]
+    Df = Df.iloc[:(i+3)]
     activity_heatmap(Act)
-    plot_stirring(Df)
+    plot_stirring(Df, paradigm, radius)

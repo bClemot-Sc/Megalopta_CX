@@ -124,7 +124,7 @@ def run_simulation():
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, PARADIGM, RADIUS, FOOD)
+        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, PARADIGM, TIMER, RADIUS, FOOD)
 
 
 ## ----- Configure GUI
