@@ -128,11 +128,10 @@ def activity_heatmap(activity_df):
 
 
 ## ----- Graphical representation for stirring
-def plot_stirring(Df, nest_size, paradigm, radius):
+def plot_stirring(Df, nest_size, food_list, paradigm, radius):
 
     # Plot the agent journey
     plt.plot(Df["Y"], -Df["X"], linestyle="-")
-    plt.scatter(Df["Y"].iloc[-1], -Df["X"].iloc[-1], color="red")
     
     # Plot the nest size
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
@@ -143,8 +142,16 @@ def plot_stirring(Df, nest_size, paradigm, radius):
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         plt.gca().add_patch(border)
 
+    # Check paradigm for food source representation
+    if paradigm == "Food seeking":
+        for f in range(len(food_list)):
+            food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
+            plt.gca().add_patch(food_source)
+
+    # Plot the graph
     plt.xlabel("X-coordinate")
     plt.ylabel("Y-coordinate")
+    plt.axis('equal')
     plt.grid(True)
     plt.show()
 
@@ -155,7 +162,18 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
     expected_EPG = pd.DataFrame(0.0, index=range(simulation_time+1), columns=(range(16)))
-    goal_gate = 0
+    food_check = 0
+
+    food_list = []
+    # Initialize food sources
+    if paradigm == "Food seeking":
+
+        # randomly create food sources (x,y,radius)
+        for f in range(food):
+            f_x = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
+            f_y = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
+            f_r = random.randint(5, 20)
+            food_list.append((f_x,f_y,f_r))
 
     # Time loop
     for i in range(simulation_time):
@@ -178,20 +196,31 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         else:
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
-        # Update activity vector with connectivity matrix depending on the paradigm
-        if paradigm == "Timed exploration" and i<timer:
+        # Check if the agent has reached food depending on the paradigm
+        if food_check == 0:
+
+            # Paradigm 1
+            if paradigm == "Timed exploration" and i>timer:
+                food_check = 1
+
+            # Paradigm 2
+            elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
+                food_check = 1
+
+            # Paradigm 3
+            elif paradigm == "Food seeking":
+                for f in range(food):
+                    if euclidian_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
+                        food_check = 1
+
+        # Update activity vector depending on the inner state
+        if food_check == 0:
 
             # Update new activity with no hd → PFL (Alternative connectivity matrix)
             Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
-        elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])<radius and goal_gate == 0:
+        elif food_check == 1:
 
-            # Update new activity with no hd → PFL (Alternative connectivity matrix)
-            Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
-
-        else:
-            
-            goal_gate = 1
             # Update new activity with complete connectivity matrix
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
 
@@ -205,11 +234,11 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1, "Y"] = new_y
 
         # Stop simulation when the agent has returned to the nest
-        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and goal_gate == 1:
+        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and food_check == 1:
             break
 
     # Graphical output
     Act = Act.iloc[:(i+2)]
     Df = Df.iloc[:(i+3)]
     activity_heatmap(Act)
-    plot_stirring(Df, nest_size, paradigm, radius)
+    plot_stirring(Df, nest_size, food_list, paradigm, radius)
