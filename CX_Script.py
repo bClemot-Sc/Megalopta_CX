@@ -6,6 +6,7 @@
 import csv
 import math
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 import numpy as np
 import pandas as pd
 import random
@@ -39,9 +40,10 @@ ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
 ## ----- Initialise agent dataframe and neuron activity dataframe
 def initialise_dataframes(ids_list,time):
     # Agent dataframe
-    agent_df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation"])
+    agent_df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation", "Food"])
     # Set speed to 1 for the whole simulation
     agent_df["Speed"] = 1.0
+    agent_df["Food"] = 0
     # Activity dataframe
     activity_df = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
     return agent_df, activity_df
@@ -130,29 +132,56 @@ def activity_heatmap(activity_df):
 ## ----- Graphical representation for stirring
 def plot_stirring(Df, nest_size, food_list, paradigm, radius):
 
+    fig, ax = plt.subplots()
+    plt.subplots_adjust(bottom=0.25)
+
+    # Initial time index
+    initial_time = 0
+
     # Plot the agent journey
-    plt.plot(Df["Y"], -Df["X"], linestyle="-")
-    
+    line0, = ax.plot(Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
+    line1, = ax.plot(Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
+
     # Plot the nest size
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
-    plt.gca().add_patch(nest)
+    ax.add_patch(nest)
 
     # Check paradigm for border representation
     if paradigm == "Till border exploration":
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
-        plt.gca().add_patch(border)
+        ax.add_patch(border)
 
     # Check paradigm for food source representation
     if paradigm == "Food seeking":
         for f in range(len(food_list)):
             food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
-            plt.gca().add_patch(food_source)
+            ax.add_patch(food_source)
 
     # Plot the graph
-    plt.xlabel("X-coordinate")
-    plt.ylabel("Y-coordinate")
+    plt.xlabel("X-coordinate", fontsize=16)
+    plt.ylabel("Y-coordinate", fontsize=16)
     plt.axis('equal')
     plt.grid(True)
+
+    # Slider for time
+    ax_time = plt.axes([0.25, 0.1, 0.65, 0.05])
+    time_slider = Slider(ax_time, 'Time', 0, len(Df) - 1, valinit=initial_time, valstep=1)
+
+    # Update function for the slider
+    shift = (Df["Food"] == 1).idxmax() if (Df["Food"] == 1).any() else Df.shape[0]
+    def update(val):
+        time_index = int(time_slider.val)
+        if time_index < shift:
+            line0.set_data(Df["Y"][:time_index], -Df["X"][:time_index])
+            line1.set_data(0,0)
+        else:
+            line0.set_data(Df["Y"][:shift], -Df["X"][:shift])
+            line1.set_data(Df["Y"][shift:time_index], -Df["X"][shift:time_index])
+        fig.canvas.draw_idle()
+
+    # Attach the update function to the slider
+    time_slider.on_changed(update)
+
     plt.show()
 
 
@@ -162,7 +191,6 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
     # Initialisation
     Df, Act = initialise_dataframes(COL_IDS,simulation_time)
     expected_EPG = pd.DataFrame(0.0, index=range(simulation_time+1), columns=(range(16)))
-    food_check = 0
 
     food_list = []
     # Initialize food sources
@@ -197,29 +225,29 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
         # Check if the agent has reached food depending on the paradigm
-        if food_check == 0:
+        if Df.loc[i,"Food"] == 0:
 
             # Paradigm 1
             if paradigm == "Timed exploration" and i>timer:
-                food_check = 1
+                Df.loc[i:,"Food"] = 1
 
             # Paradigm 2
             elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
-                food_check = 1
+                Df.loc[i:,"Food"] = 1
 
             # Paradigm 3
             elif paradigm == "Food seeking":
                 for f in range(food):
                     if euclidian_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
-                        food_check = 1
+                        Df.loc[i:,"Food"] = 1
 
         # Update activity vector depending on the inner state
-        if food_check == 0:
+        if Df.loc[i,"Food"] == 0:
 
             # Update new activity with no hd → PFL (Alternative connectivity matrix)
             Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
-        elif food_check == 1:
+        elif Df.loc[i,"Food"] == 1:
 
             # Update new activity with complete connectivity matrix
             Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
@@ -234,7 +262,7 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1, "Y"] = new_y
 
         # Stop simulation when the agent has returned to the nest
-        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and food_check == 1:
+        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and Df.loc[i,"Food"] == 1:
             break
 
     # Graphical output

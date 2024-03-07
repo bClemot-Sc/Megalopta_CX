@@ -1,13 +1,11 @@
-import math
+import pandas as pd
 
-def euclidean_distance(point1, point2):
-    x1, y1 = point1
-    x2, y2 = point2
-    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-    return distance
+# Créez un exemple de DataFrame
+data = {'colonne_X': [0, 0, 0, 0, 0, 0, 0, 0, 0]}
+df = pd.DataFrame(data)
 
-point1 = (0, 0)
-point2 = (-100, 0)
+# Trouvez l'indice de la première occurrence où la colonne passe de 0 à 1
+indice_ligne = (df['colonne_X'] == 1).idxmax()
 
-distance = euclidean_distance(point1, point2)
-print(f"The Euclidean distance between {point1} and {point2} is: {distance}")
+# Affichez le résultat
+print("L'indice de la première occurrence où la colonne passe de 0 à 1 :", indice_ligne)
