@@ -9,3 +9,6 @@ indice_ligne = (df['colonne_X'] == 1).idxmax()
 
 # Affichez le résultat
 print("L'indice de la première occurrence où la colonne passe de 0 à 1 :", indice_ligne)
+
+
+print(int(3.3))

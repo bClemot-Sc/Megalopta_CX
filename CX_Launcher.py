@@ -40,6 +40,15 @@ def show_parameters(*args):
         food_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
 
+    elif selected_option == "Debug Rotation":
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
+        radius_label.grid_forget()
+        radius_entry.grid_forget()
+        food_label.grid_forget()
+        food_entry.grid_forget()
+        i_row = 0
+
     # Adjust other widgets position
     run_button.grid(row=6+i_row, column=0, columnspan=2, pady=20)
 
@@ -188,7 +197,7 @@ if __name__ == "__main__":
     # Paradigm menu
     paradigm_var = ctk.StringVar(root)
     paradigm_var.set("Timed exploration")
-    paradigm_menu = ctk.CTkOptionMenu(root, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking"])
+    paradigm_menu = ctk.CTkOptionMenu(root, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Debug Rotation"])
     paradigm_menu.grid(row=5, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters

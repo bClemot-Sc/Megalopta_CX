@@ -219,9 +219,7 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Act.loc[i, "TS"] = Df.loc[i, "Speed"]
 
         # Update TR activity input (should be improved)
-        if i<5:
-            pass
-        else:
+        if i>5:
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
         # Check if the agent has reached food depending on the paradigm
@@ -256,7 +254,10 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
         # Update Orientation and position
-        Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
+        if paradigm != "Debug Rotation":
+            Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
+        elif i > int(simulation_time/2):
+            Df.loc[i+1, "Orientation"] = noise_deviation
         new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
         Df.loc[i+1, "X"] = new_x
         Df.loc[i+1, "Y"] = new_y

@@ -104,21 +104,21 @@ def model(params):
     sim_err = 0
     for j in range(int(SIM_TIME-3)):
         # EPG
-        epg_sim = np.array(Act.iloc[j, Act.columns.get_loc("EPG1"):Act.columns.get_loc("EPG16")+1])
-        epg_exp = np.array(expected.iloc[j+1])
-        sim_err += np.sum(np.abs(epg_sim - epg_exp))
+        # epg_sim = np.array(Act.iloc[j, Act.columns.get_loc("EPG1"):Act.columns.get_loc("EPG16")+1])
+        # epg_exp = np.array(expected.iloc[j+1])
+        # sim_err += np.sum(np.abs(epg_sim - epg_exp))
         # PEG
-        peg_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEG1"):Act.columns.get_loc("PEG16")+1])
-        peg_exp = np.array(expected.iloc[j+2])
-        sim_err += np.sum(np.abs(peg_sim - peg_exp))
+        # peg_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEG1"):Act.columns.get_loc("PEG16")+1])
+        # peg_exp = np.array(expected.iloc[j+2])
+        # sim_err += np.sum(np.abs(peg_sim - peg_exp))
         # d7
         d7_sim = np.array(Act.iloc[j, Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16")+1])
         d7_exp = np.array(expected.iloc[j+2])
         sim_err += np.sum(np.abs(d7_sim - d7_exp))
         # PEN
-        pen_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEN1"):Act.columns.get_loc("PEN16")+1])
-        pen_exp = np.array(expected.iloc[j+2])
-        sim_err += np.sum(np.abs(pen_sim - pen_exp))
+        # pen_sim = np.array(Act.iloc[j, Act.columns.get_loc("PEN1"):Act.columns.get_loc("PEN16")+1])
+        # pen_exp = np.array(expected.iloc[j+2])
+        # sim_err += np.sum(np.abs(pen_sim - pen_exp))
             
     return sim_err
 
@@ -138,44 +138,47 @@ param_constraints = (
 )
 
 
-# ## ----- Multi start optimization algorithm
-# best_result = None
-# for _ in range(10):
-#     # Initial conditions (random)
-#     initial_params = [np.random.uniform(low, high) for low, high in param_constraints]
-#     # Optimization algorithm
-#     result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
-#     if best_result is None or result.fun < best_result.fun:
-#         best_result = result
+## ----- Multi start optimization algorithm
+best_result = None
+for _ in range(10):
+    # Initial conditions (random)
+    initial_params = [np.random.uniform(low, high) for low, high in param_constraints]
+    # Optimization algorithm
+    result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
+    if best_result is None or result.fun < best_result.fun:
+        best_result = result
 
 
-# ## ----- Final output
-# # Afficher les résultats
-# print("Best gain values:", best_result.x)
-# print("Minimal error:", best_result.fun)
-# print("Message:", best_result.message)
-# print("Success:", best_result.success)
-
-
-## ----- Driven optimization algorithm
-print("==========")
-initial_params = [
-    1.0,  # ciu_to_epg
-    0.1,  # epg_to_pen
-    0.4,  # pen_to_epg
-    0.8,  # tr_to_pen
-    0.7,  # epg_to_peg
-    0.4,  # peg_to_epg
-    1.0,  # epg_to_d7
-    1.0,  # d7_to_peg
-    1.0,  # d7_to_pen
-    1.0  # d7_to_d7
-]
-result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
-print("Driven gain values:", result.x)
-print("Minimal error:", result.fun)
-print("Message:", result.message)
-print("Success:", result.success)
+## ----- Final output
+# Afficher les résultats
+print("Best gain values:", best_result.x)
+print("Minimal error:", best_result.fun)
+print("Message:", best_result.message)
+print("Success:", best_result.success)
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Runing time:", elapsed_time)
+
+
+## ----- Driven optimization algorithm
+# print("==========")
+# initial_params = [
+#     1.0,  # ciu_to_epg
+#     0.1,  # epg_to_pen
+#     0.4,  # pen_to_epg
+#     0.8,  # tr_to_pen
+#     0.7,  # epg_to_peg
+#     0.4,  # peg_to_epg
+#     1.0,  # epg_to_d7
+#     1.0,  # d7_to_peg
+#     1.0,  # d7_to_pen
+#     1.0  # d7_to_d7
+# ]
+# result = minimize(model, initial_params, method='Powell', bounds=param_constraints)
+# print("Driven gain values:", result.x)
+# print("Minimal error:", result.fun)
+# print("Message:", result.message)
+# print("Success:", result.success)
+# end_time = time.time()
+# elapsed_time = end_time - start_time
+# print("Runing time:", elapsed_time)
