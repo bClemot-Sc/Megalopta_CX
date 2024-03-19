@@ -54,6 +54,17 @@ def linear_activation(activity_vector):
     return np.clip(activity_vector, 0, 1, out=activity_vector)
 
 
+## ----- Gaussian function
+def gaussian(x, a, b, c):
+    return a * np.exp(-(x - b)**2 / (2 * c**2))
+
+
+## ----- Fit and extract signal shape parameters
+def fit_and_extract_parameters(activity_vector):
+    param_gaussian, _ = curve_fit(gaussian, x, activity_vector, p0=[1, np.mean(x), 1])
+    return param_gaussian
+
+
 ## ----- Compute euclidian distance between two points
 def euclidian_distance(x1,y1,x2,y2):
     return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
@@ -131,42 +142,33 @@ def activity_heatmap(activity_df):
 
 ## ----- Graphical representation for stirring
 def plot_stirring(Df, nest_size, food_list, paradigm, radius):
-
     fig, ax = plt.subplots()
     plt.subplots_adjust(bottom=0.25)
-
     # Initial time index
     initial_time = 0
-
     # Plot the agent journey
     line0, = ax.plot(Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
     line1, = ax.plot(Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
-
     # Plot the nest size
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
-
     # Check paradigm for border representation
     if paradigm == "Till border exploration":
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
-
     # Check paradigm for food source representation
     if paradigm == "Food seeking":
         for f in range(len(food_list)):
             food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
-
     # Plot the graph
     plt.xlabel("X-coordinate", fontsize=16)
     plt.ylabel("Y-coordinate", fontsize=16)
     plt.axis('equal')
     plt.grid(True)
-
     # Slider for time
     ax_time = plt.axes([0.25, 0.1, 0.65, 0.05])
     time_slider = Slider(ax_time, 'Time', 0, len(Df) - 1, valinit=initial_time, valstep=1)
-
     # Update function for the slider
     shift = (Df["Food"] == 1).idxmax() if (Df["Food"] == 1).any() else Df.shape[0]
     def update(val):
@@ -178,10 +180,8 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
             line0.set_data(Df["Y"][:shift], -Df["X"][:shift])
             line1.set_data(Df["Y"][shift:time_index], -Df["X"][shift:time_index])
         fig.canvas.draw_idle()
-
     # Attach the update function to the slider
     time_slider.on_changed(update)
-
     plt.show()
 
 
@@ -189,8 +189,9 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
 def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food):
 
     # Initialisation
-    Df, Act = initialise_dataframes(COL_IDS,simulation_time)
-    expected_EPG = pd.DataFrame(0.0, index=range(simulation_time+1), columns=(range(16)))
+    heating = 30
+    Df, Act = initialise_dataframes(COL_IDS,simulation_time + heating)
+    expected_EPG = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
 
     food_list = []
     # Initialize food sources
@@ -204,7 +205,7 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
             food_list.append((f_x,f_y,f_r))
 
     # Time loop
-    for i in range(simulation_time):
+    for i in range(simulation_time + heating):
 
         # Update CIU activity input
         if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
@@ -226,7 +227,7 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         if Df.loc[i,"Food"] == 0:
 
             # Paradigm 1
-            if paradigm == "Timed exploration" and i>timer:
+            if paradigm == "Timed exploration" and i>(heating + timer):
                 Df.loc[i:,"Food"] = 1
 
             # Paradigm 2
@@ -256,18 +257,21 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         # Update Orientation and position
         if paradigm != "Debug Rotation":
             Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
-        elif i > int(simulation_time/2):
+        elif i > int(heating + simulation_time/2):
             Df.loc[i+1, "Orientation"] = noise_deviation
-        new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
-        Df.loc[i+1, "X"] = new_x
-        Df.loc[i+1, "Y"] = new_y
+        if i >= heating:
+            if i == heating:
+                Act.iloc[i+1, Act.columns.get_loc("hd1"):Act.columns.get_loc("hd16") + 1] = [0] * 16
+            new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
+            Df.loc[i+1, "X"] = new_x
+            Df.loc[i+1, "Y"] = new_y
 
         # Stop simulation when the agent has returned to the nest
         if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and Df.loc[i,"Food"] == 1:
             break
 
     # Graphical output
-    Act = Act.iloc[:(i+2)]
-    Df = Df.iloc[:(i+3)]
+    Act = Act.iloc[heating:(i+2)]
+    Df = Df.iloc[heating:(i+3)]
     activity_heatmap(Act)
     plot_stirring(Df, nest_size, food_list, paradigm, radius)
