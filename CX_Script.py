@@ -10,6 +10,7 @@ from matplotlib.widgets import Slider
 import numpy as np
 import pandas as pd
 import random
+from scipy.optimize import curve_fit
 import seaborn as sns
 
 
@@ -54,15 +55,16 @@ def linear_activation(activity_vector):
     return np.clip(activity_vector, 0, 1, out=activity_vector)
 
 
-## ----- Gaussian function
-def gaussian(x, a, b, c):
-    return a * np.exp(-(x - b)**2 / (2 * c**2))
+## ----- Sinusoidal function
+def sinusoid(x, a, b, c, d):
+    return a * np.sin(b * x + c) + d
 
 
 ## ----- Fit and extract signal shape parameters
-def fit_and_extract_parameters(activity_vector):
-    param_gaussian, _ = curve_fit(gaussian, x, activity_vector, p0=[1, np.mean(x), 1])
-    return param_gaussian
+def fit_sinusoid(activity_vector):
+    x = np.arange(16)
+    param_sinusoid, _ = curve_fit(sinusoid, x, activity_vector, p0=[1, 2*np.pi/len(x), 0, np.mean(activity_vector)])
+    return param_sinusoid
 
 
 ## ----- Compute euclidian distance between two points
@@ -265,6 +267,24 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
             new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
             Df.loc[i+1, "X"] = new_x
             Df.loc[i+1, "Y"] = new_y
+
+        # Get sinusoid d7 shape after heating
+        if i == heating:
+            sin_list = []
+
+            # Iterate over the whole activity Dataframe
+            for j in range(4,heating):
+
+                try:
+                    sin_param = fit_sinusoid(Act.iloc[j, Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1])
+                    sin_list.append(sin_param)
+                except ValueError:
+                    continue
+
+            # Calculate sinusoid mean parameters and standard deviation
+            sin_means = np.mean(sin_list, axis=0)
+            sin_medians = np.median(sin_list, axis=0)
+            sin_stdevs = np.std(sin_list, axis=0)
 
         # Stop simulation when the agent has returned to the nest
         if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and Df.loc[i,"Food"] == 1:
