@@ -8,9 +8,19 @@
 import pandas as pd
 import csv
 
+## ----- Eddit function
+def eddit_matrix(path):
+
+    # Open Excel sheets
+    MATRIX = pd.read_excel("path", sheet_name="Global", header=None)
+    IDS = pd.read_excel("path", sheet_name="IDs", header=None)
+
+    # Transpose connectivity matrix and convert IDs to list
+
+
+
 ## ----- Open the Excel sheets
-MATRIX = pd.read_excel("Theorical_connectivity_matrices.xlsx", sheet_name="Global", header=None)
-IDS = pd.read_excel("Theorical_connectivity_matrices.xlsx", sheet_name="IDs", header=None)
+
 
 
 ## ----- Transpose the connectivity matrix, convert the IDs to a list
@@ -27,3 +37,4 @@ with open("Neurons_IDs.csv", 'w', newline='') as csvfile:
 
 ## ----- End message
 print("Eddit has been successfull.")
+

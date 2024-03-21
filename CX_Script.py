@@ -187,6 +187,29 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     plt.show()
 
 
+## ----- Graphical representation for fitted sinusoidal function
+def sinusoid_plot(data, param):
+    df = pd.DataFrame(data)
+    plt.figure(figsize=(10, 6))
+    # create violinplot
+    sns.violinplot(data=df, palette="pastel", alpha=0.5)
+    # Add sinusoid function
+    x = range(16)
+    a = param[0]
+    b = param[1]
+    c = param[2]
+    d = param[3]
+    y = a * np.sin(b * (x + c)) + d
+    sns.lineplot(y)
+    # Set labels and title
+    plt.ylim(0, 1)
+    plt.xticks(np.arange(len(df.columns)), df.columns)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlabel("Delta7 neuron ID")
+    plt.ylabel("Firing rate")
+    plt.show()
+
+
 ## ----- Runing simulation
 def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food):
 
@@ -272,19 +295,32 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         if i == heating:
             sin_list = []
 
-            # Iterate over the whole activity Dataframe
+            # Copy the dataframe for ploting
+            centered_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
+
+            # Iterate over the whole heating activity Dataframe
             for j in range(4,heating):
 
+                # Normalize the dataframe for ploting
+                d7_list = centered_d7.iloc[j,:].tolist()
+                while max(d7_list) != d7_list[3]:
+                    d7_list.append(d7_list.pop(0))
+                centered_d7.iloc[j,:] = d7_list
+
+                # Fit the sinusoid function
                 try:
-                    sin_param = fit_sinusoid(Act.iloc[j, Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1])
+                    sin_param = fit_sinusoid(centered_d7.iloc[j,:])
                     sin_list.append(sin_param)
-                except ValueError:
-                    continue
+                except Exception:
+                    pass
 
             # Calculate sinusoid mean parameters and standard deviation
             sin_means = np.mean(sin_list, axis=0)
             sin_medians = np.median(sin_list, axis=0)
             sin_stdevs = np.std(sin_list, axis=0)
+
+            # Graphical representation of the Delta7 sinusoidal fitting
+            sinusoid_plot(centered_d7.iloc[4:,:], sin_medians)
 
         # Stop simulation when the agent has returned to the nest
         if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and Df.loc[i,"Food"] == 1:
