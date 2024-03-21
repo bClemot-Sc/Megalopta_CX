@@ -4,6 +4,7 @@
 
 ## ----- Import packages
 import csv
+import Eddit_matrix
 import math
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
@@ -15,6 +16,7 @@ import seaborn as sns
 
 
 ## ----- Import connectivity matrix and IDs list
+Eddit_matrix.eddit_matrix("Theorical_connectivity_matrices.xlsx")
 CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
 with open("Neurons_IDs.csv", "r") as file:
         COL_IDS = next(csv.reader(file, delimiter=","))
@@ -190,9 +192,15 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
 ## ----- Graphical representation for fitted sinusoidal function
 def sinusoid_plot(data, param):
     df = pd.DataFrame(data)
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(14, 8))
     # create violinplot
     sns.violinplot(data=df, palette="pastel", alpha=0.5)
+    # Set labels and title
+    plt.ylim(0, 1)
+    plt.xticks(np.arange(len(df.columns)), df.columns)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlabel("Delta7 neuron ID")
+    plt.ylabel("Firing rate")
     # Add sinusoid function
     x = range(16)
     a = param[0]
@@ -201,12 +209,6 @@ def sinusoid_plot(data, param):
     d = param[3]
     y = a * np.sin(b * (x + c)) + d
     sns.lineplot(y)
-    # Set labels and title
-    plt.ylim(0, 1)
-    plt.xticks(np.arange(len(df.columns)), df.columns)
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.xlabel("Delta7 neuron ID")
-    plt.ylabel("Firing rate")
     plt.show()
 
 
