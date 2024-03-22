@@ -18,6 +18,8 @@ def show_parameters(*args):
         radius_entry.grid_forget()
         food_label.grid_forget()
         food_entry.grid_forget()
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
         timer_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
         timer_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
@@ -27,6 +29,8 @@ def show_parameters(*args):
         food_entry.grid_forget()
         timer_label.grid_forget()
         timer_entry.grid_forget()
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
         radius_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
         radius_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
@@ -36,18 +40,33 @@ def show_parameters(*args):
         radius_entry.grid_forget()
         timer_label.grid_forget()
         timer_entry.grid_forget()
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
         food_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
         food_entry.grid(row=6, column=1, sticky="ew", padx=30)
         i_row = 1
 
-    elif selected_option == "Debug Rotation":
+    elif selected_option == "Debug rotation":
         timer_label.grid_forget()
         timer_entry.grid_forget()
         radius_label.grid_forget()
         radius_entry.grid_forget()
         food_label.grid_forget()
         food_entry.grid_forget()
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
         i_row = 0
+
+    elif selected_option == "Simple double goals":
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
+        radius_label.grid_forget()
+        radius_entry.grid_forget()
+        food_label.grid_forget()
+        food_entry.grid_forget()
+        ratio_label.grid(row=6, column=0, pady=20, sticky="w", padx=70)
+        ratio_entry.grid(row=6, column=1, sticky="ew", padx=30)
+        i_row = 1
 
     # Adjust other widgets position
     run_button.grid(row=6+i_row, column=0, columnspan=2, pady=20)
@@ -64,6 +83,7 @@ def run_simulation():
     error4_label.grid_forget()
     error5_label.grid_forget()
     error6_label.grid_forget()
+    error7_label.grid_forget()
 
     # Check for inputs and issues
     try:
@@ -72,7 +92,7 @@ def run_simulation():
                 error1_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1
-    except ValueError:
+    except:
         error1_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
         error=1
         k+=1
@@ -83,7 +103,7 @@ def run_simulation():
                 error2_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
-    except ValueError:
+    except:
         error2_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
         error=1
         k+=1
@@ -94,7 +114,7 @@ def run_simulation():
                 error6_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
-    except ValueError:
+    except:
         error6_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
         error=1
         k+=1
@@ -109,7 +129,7 @@ def run_simulation():
                 error5_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
-        except ValueError:
+        except:
             error5_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
             k+=1
@@ -122,7 +142,7 @@ def run_simulation():
                 error3_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
-        except ValueError:
+        except:
             error3_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
             k+=1 
@@ -135,16 +155,29 @@ def run_simulation():
                 error4_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
                 error=1
                 k+=1 
-        except ValueError:
+        except:
             error4_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
             error=1
-            k+=1         
+            k+=1       
+
+    RATIO = 0.5
+    if PARADIGM == "Simple double goals":
+        try:
+            RATIO = float(ratio_entry.get())
+            if not 0.0 <= RATIO <= 1.0:
+                error7_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+                error=1
+                k+=1 
+        except:
+            error7_label.grid(row=8+i_row+k, column=0, columnspan=2,padx=50, pady=10)
+            error=1
+            k+=1 
 
     PERIOD = period_menu.get()
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(CX_Script.CON_MAT, TIME, PERIOD, NOISE, NEST, PARADIGM, TIMER, RADIUS, FOOD)
+        CX_Script.run_function(TIME, PERIOD, NOISE, NEST, PARADIGM, TIMER, RADIUS, FOOD, RATIO)
 
 
 ## ----- Configure GUI
@@ -197,7 +230,7 @@ if __name__ == "__main__":
     # Paradigm menu
     paradigm_var = ctk.StringVar(root)
     paradigm_var.set("Timed exploration")
-    paradigm_menu = ctk.CTkOptionMenu(root, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Debug Rotation"])
+    paradigm_menu = ctk.CTkOptionMenu(root, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Debug rotation", "Simple double goals"])
     paradigm_menu.grid(row=5, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters
@@ -221,6 +254,12 @@ if __name__ == "__main__":
     # Food source entry
     food_entry = ctk.CTkEntry(root, placeholder_text=5)
     food_entry.grid_forget()
+    # Goal ratio label
+    ratio_label = ctk.CTkLabel(root, text="→ Goal direction ratio:", font=ctk.CTkFont(size=20))
+    ratio_label.grid_forget()
+    # Goal ratio entry
+    ratio_entry = ctk.CTkEntry(root, placeholder_text=0.5)
+    ratio_entry.grid_forget()
 
     # Initialize error labels
     # Initialize error
@@ -230,6 +269,7 @@ if __name__ == "__main__":
     error4_label = ctk.CTkLabel(root, text="Number of food source should be a a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error5_label = ctk.CTkLabel(root, text="Timer before homing behaviour should be a positive integer lower or equal to maximum simulation time.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error6_label = ctk.CTkLabel(root, text="Nest size should be a positive float value.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error7_label = ctk.CTkLabel(root, text="Ratio value should be a float betweem 0 and 1.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
     # Run button
     run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)

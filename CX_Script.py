@@ -15,31 +15,6 @@ from scipy.optimize import curve_fit
 import seaborn as sns
 
 
-## ----- Import connectivity matrix and IDs list
-Eddit_matrix.eddit_matrix("Theorical_connectivity_matrices.xlsx")
-CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
-with open("Neurons_IDs.csv", "r") as file:
-        COL_IDS = next(csv.reader(file, delimiter=","))
-
-
-## ----- Get IDs index
-IND_PEN = [i for i, element in enumerate(COL_IDS) if "PEN" in element]
-IND_EPG = [i for i, element in enumerate(COL_IDS) if "EPG" in element]
-IND_PEG = [i for i, element in enumerate(COL_IDS) if "PEG" in element]
-IND_TR = [i for i, element in enumerate(COL_IDS) if "TR" in element]
-IND_D7 = [i for i, element in enumerate(COL_IDS) if "d7-" in element]
-IND_CIU = [i for i, element in enumerate(COL_IDS) if "CIU" in element]
-IND_PFN = [i for i, element in enumerate(COL_IDS) if "PFN" in element]
-IND_PFL = [i for i, element in enumerate(COL_IDS) if "PFL" in element]
-IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
-IND_TS = [i for i, element in enumerate(COL_IDS) if "TS" in element]
-
-
-## ----- Create alternative matrix for exploration when no food (no hd → PFL) (MODIFY LATER)
-ALT_MAT = np.copy(CON_MAT)
-ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
-
-
 ## ----- Initialise agent dataframe and neuron activity dataframe
 def initialise_dataframes(ids_list,time):
     # Agent dataframe
@@ -65,8 +40,43 @@ def sinusoid(x, a, b, c, d):
 ## ----- Fit and extract signal shape parameters
 def fit_sinusoid(activity_vector):
     x = np.arange(16)
-    param_sinusoid, _ = curve_fit(sinusoid, x, activity_vector, p0=[1, 2*np.pi/len(x), 0, np.mean(activity_vector)])
+    param_sinusoid, _ = curve_fit(sinusoid, x, activity_vector, p0=[-0.6, 0.8, -4.4, 0.4])
     return param_sinusoid
+
+
+## ----- Generate goal directions
+def generate_goal(ratio, param):
+    # Generate sinusoidal shape
+    x = range(16)
+    a = param[0]
+    b = param[1]
+    c = param[2]
+    d = param[3]
+    y = a * np.sin(b * (x + c)) + d
+    # Adjust ratio
+    goal1 = list(y * ratio)
+    goal2 = list(y * (1-ratio))
+    # Adjust position (goal1 at 7, goal2 at 5)
+    while max(goal1) != goal1[6]:
+        goal1.append(goal1.pop(0))
+    while max(goal2) != goal2[4]:
+        goal2.append(goal2.pop(0))
+    return [goal1[i] + goal2[i] for i in range(len(goal1))]
+
+
+## ----- Compute r squared value
+def sinusoid_r_squared(y_true, param):
+    x = range(16)
+    a = param[0]
+    b = param[1]
+    c = param[2]
+    d = param[3]
+    y_pred = a * np.sin(b * (x + c)) + d
+    y_mean = np.mean(y_true)
+    total_sum_of_squares = np.sum((y_true - y_mean) ** 2)
+    residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
+    r_squared = 1 - (residual_sum_of_squares / total_sum_of_squares)
+    return r_squared
 
 
 ## ----- Compute euclidian distance between two points
@@ -196,7 +206,6 @@ def sinusoid_plot(data, param):
     # create violinplot
     sns.violinplot(data=df, palette="pastel", alpha=0.5)
     # Set labels and title
-    plt.ylim(0, 1)
     plt.xticks(np.arange(len(df.columns)), df.columns)
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.xlabel("Delta7 neuron ID")
@@ -213,10 +222,38 @@ def sinusoid_plot(data, param):
 
 
 ## ----- Runing simulation
-def run_function(connectivity_matrix, simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food):
+def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio):
+
+    # import connectivity matrix
+    if paradigm == "Simple double goals":
+        Eddit_matrix.eddit_matrix("Simplified_connectivity_matrices.xlsx")
+        CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
+        with open("Neurons_IDs.csv", "r") as file:
+            COL_IDS = next(csv.reader(file, delimiter=","))
+    else: 
+        Eddit_matrix.eddit_matrix("Theorical_connectivity_matrices.xlsx")
+        CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
+        with open("Neurons_IDs.csv", "r") as file:
+            COL_IDS = next(csv.reader(file, delimiter=","))
+
+    # Get IDs index
+    IND_PEN = [i for i, element in enumerate(COL_IDS) if "PEN" in element]
+    IND_EPG = [i for i, element in enumerate(COL_IDS) if "EPG" in element]
+    IND_PEG = [i for i, element in enumerate(COL_IDS) if "PEG" in element]
+    IND_TR = [i for i, element in enumerate(COL_IDS) if "TR" in element]
+    IND_D7 = [i for i, element in enumerate(COL_IDS) if "d7-" in element]
+    IND_CIU = [i for i, element in enumerate(COL_IDS) if "CIU" in element]
+    IND_PFN = [i for i, element in enumerate(COL_IDS) if "PFN" in element]
+    IND_PFL = [i for i, element in enumerate(COL_IDS) if "PFL" in element]
+    IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
+    IND_TS = [i for i, element in enumerate(COL_IDS) if "TS" in element]
+
+    # Create alternative matrix when no food 
+    ALT_MAT = np.copy(CON_MAT)
+    ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
 
     # Initialisation
-    heating = 30
+    heating = 100
     Df, Act = initialise_dataframes(COL_IDS,simulation_time + heating)
     expected_EPG = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
 
@@ -224,7 +261,7 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
     # Initialize food sources
     if paradigm == "Food seeking":
 
-        # randomly create food sources (x,y,radius)
+        # randomly create food sources (x,y,radius)  
         for f in range(food):
             f_x = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
             f_y = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
@@ -249,6 +286,10 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         # Update TR activity input (should be improved)
         if i>5:
             Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
+
+        # Introduce goal directions to PFL neurons 
+        if paradigm == "Simple double goals" and i > heating:
+            Act.iloc[i, Act.columns.get_loc("PFN1"):Act.columns.get_loc("PFN16") + 1] = generate_goal(ratio, sin_param)
 
         # Check if the agent has reached food depending on the paradigm
         if Df.loc[i,"Food"] == 0:
@@ -282,12 +323,12 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
         Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
         # Update Orientation and position
-        if paradigm != "Debug Rotation":
+        if paradigm != "Debug rotation":
             Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
         elif i > int(heating + simulation_time/2):
             Df.loc[i+1, "Orientation"] = noise_deviation
         if i >= heating:
-            if i == heating:
+            if i == heating and paradigm != "Simple double goals":
                 Act.iloc[i+1, Act.columns.get_loc("hd1"):Act.columns.get_loc("hd16") + 1] = [0] * 16
             new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
             Df.loc[i+1, "X"] = new_x
@@ -309,23 +350,23 @@ def run_function(connectivity_matrix, simulation_time, time_period, noise_deviat
                     d7_list.append(d7_list.pop(0))
                 centered_d7.iloc[j,:] = d7_list
 
-                # Fit the sinusoid function
-                try:
-                    sin_param = fit_sinusoid(centered_d7.iloc[j,:])
-                    sin_list.append(sin_param)
-                except Exception:
-                    pass
+            r_squared = 1
+            while r_squared >= 1:
 
-            # Calculate sinusoid mean parameters and standard deviation
-            sin_means = np.mean(sin_list, axis=0)
-            sin_medians = np.median(sin_list, axis=0)
-            sin_stdevs = np.std(sin_list, axis=0)
+                # Fit the sinusoid function
+                sin_param = fit_sinusoid(centered_d7.iloc[4:,:].median())
+
+                # compute r squared value
+                r_squared = sinusoid_r_squared(centered_d7.iloc[4:,:].median(), sin_param)
+
+                print(sin_param)
+                print(r_squared)
 
             # Graphical representation of the Delta7 sinusoidal fitting
-            sinusoid_plot(centered_d7.iloc[4:,:], sin_medians)
+            sinusoid_plot(centered_d7.iloc[4:,:], sin_param)
 
         # Stop simulation when the agent has returned to the nest
-        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"])<nest_size and Df.loc[i,"Food"] == 1:
+        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
             break
 
     # Graphical output

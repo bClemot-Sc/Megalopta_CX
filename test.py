@@ -1,36 +1,12 @@
-import seaborn as sns
-import matplotlib.pyplot as plt
-import numpy as np
+def sum_vectors(vector1, vector2):
+    if len(vector1) != len(vector2):
+        raise ValueError("Vectors must be of the same size")
 
-# Sample data (replace this with your dataset)
-data = sns.load_dataset('iris')
+    return [vector1[i] + vector2[i] for i in range(len(vector1))]
 
-# Extract unique categories from the dataset
-categories = data['species'].unique()
+# Example vectors
+vector1 = [1, 2, 3]
+vector2 = [4, 5, 6]
 
-# Set up the figure and axes
-plt.figure(figsize=(10, 6))
-
-# Plot violin plot
-sns.violinplot(x='species', y='sepal_length', data=data)
-
-# Overlay sinusoid function
-for i, category in enumerate(categories):
-    # Generate x values for the sinusoid function
-    x_values = np.linspace(i - 0.3, i + 0.3, 100)  # Adjust the range as needed
-    # Generate y values using sinusoid function (replace with your own function)
-    y_values = np.sin(x_values)
-    # Plot the sinusoid function
-    plt.plot(x_values, y_values, color='red')
-
-# Set x-axis tick labels
-plt.xticks(np.arange(len(categories)), categories)
-
-# Set plot title and labels
-plt.title('Violin Plot with Sinusoid Overlay')
-plt.xlabel('Species')
-plt.ylabel('Sepal Length')
-
-# Show plot
-plt.grid(True)
-plt.show()
+result = sum_vectors(vector1, vector2)
+print(result)  # Output: [5, 7, 9]
