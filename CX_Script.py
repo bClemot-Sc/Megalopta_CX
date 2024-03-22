@@ -175,7 +175,15 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
         for f in range(len(food_list)):
             food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
-    # Plot the graph
+    # Graph limits
+    farthest_point = max(abs(Df["Y"].max()), abs(Df["X"].max()))
+    plt.xlim(-farthest_point-10, farthest_point+10)
+    plt.ylim(-farthest_point-10, farthest_point+10)
+    # Check paradigm for goal directions
+    if paradigm == "Simple double goals":
+        plt.scatter(-farthest_point - 10, 0, color = "orange")
+        plt.scatter(0, farthest_point + 10, color="orange")
+    # plot the graph
     plt.xlabel("X-coordinate", fontsize=16)
     plt.ylabel("Y-coordinate", fontsize=16)
     plt.axis('equal')
@@ -210,6 +218,7 @@ def sinusoid_plot(data, param):
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.xlabel("Delta7 neuron ID")
     plt.ylabel("Firing rate")
+    plt.ylim(0,1)
     # Add sinusoid function
     x = range(16)
     a = param[0]
