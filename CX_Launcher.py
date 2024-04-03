@@ -64,14 +64,14 @@ def show_parameters(*args):
     elif selected_option == "Simple double goals":
         timer_label.grid_forget()
         timer_entry.grid_forget()
-        radius_label.grid_forget()
-        radius_entry.grid_forget()
         food_label.grid_forget()
         food_entry.grid_forget()
         nest_label.grid_forget()
         nest_entry.grid_forget()
-        ratio_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
-        ratio_entry.grid(row=2, column=1, sticky="ew", padx=30)
+        radius_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
+        radius_entry.grid(row=2, column=1, sticky="ew", padx=30)
+        ratio_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
+        ratio_entry.grid(row=3, column=1, sticky="ew", padx=30)
 
 # Check for missing inputs and run simulation
 def run_simulation():
@@ -112,7 +112,7 @@ def run_simulation():
         k+=1
 
     try:
-        TRIAL = float(trial_entry.get())
+        TRIAL = int(trial_entry.get())
         if not 1 <= TRIAL:
                 error8_label.grid(row=8+k, column=4, columnspan=2,padx=50, pady=10)
                 error=1

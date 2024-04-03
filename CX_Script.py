@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import random
 from scipy.optimize import curve_fit
+from scipy.stats import circmean, circstd
 import seaborn as sns
 
 
@@ -121,6 +122,18 @@ def update_orientation(orientation, rotational_speed, noise_deviation):
     return new_orientation % 360
 
 
+## ----- Convert vector to angle
+def get_angle(coo1,coo2):
+    # Calculate the vector between the coordinates
+    vector_x = coo2[0] - coo1[0]
+    vector_y = coo2[1] - coo1[1]
+    # Calculate the angle from the x-axis using arctan2
+    angle_radians = math.atan2(vector_y, vector_x)
+    # Convert radians to degrees
+    angle_degrees = math.degrees(angle_radians)
+    return angle_degrees
+
+
 ## ----- Activity heatmap
 def activity_heatmap(activity_df):
     Act_df = activity_df.T
@@ -151,7 +164,6 @@ def activity_heatmap(activity_df):
     # Add colorbar to the right of the subplots
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
     cbar = plt.colorbar(axs[0].collections[0], cax=cbar_ax)
-    plt.show()
 
 
 ## ----- Graphical representation for stirring
@@ -167,7 +179,7 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
     # Check paradigm for border representation
-    if paradigm == "Till border exploration":
+    if paradigm == "Till border exploration" or "Simple double goals":
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
     # Check paradigm for food source representation
@@ -175,14 +187,10 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
         for f in range(len(food_list)):
             food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
-    # Graph limits
-    farthest_point = max(abs(Df["Y"].max()), abs(Df["X"].max()))
-    plt.xlim(-farthest_point-10, farthest_point+10)
-    plt.ylim(-farthest_point-10, farthest_point+10)
     # Check paradigm for goal directions
     if paradigm == "Simple double goals":
-        plt.scatter(-farthest_point - 10, 0, color = "orange")
-        plt.scatter(0, farthest_point + 10, color="orange")
+        plt.scatter(-radius, 0, color = "orange")
+        plt.scatter(0, radius, color="orange")
     # plot the graph
     plt.xlabel("X-coordinate", fontsize=16)
     plt.ylabel("Y-coordinate", fontsize=16)
@@ -204,7 +212,6 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
         fig.canvas.draw_idle()
     # Attach the update function to the slider
     time_slider.on_changed(update)
-    plt.show()
 
 
 ## ----- Graphical representation for fitted sinusoidal function
@@ -227,11 +234,39 @@ def sinusoid_plot(data, param):
     d = param[3]
     y = a * np.sin(b * (x + c)) + d
     sns.lineplot(y)
-    plt.show()
+
+
+## ----- Circular plot function
+def circular_plot(data, trial):
+    # Get angle values
+    angles = []
+    for t in range(trial):
+        angles.append(get_angle((0,0),(data.iloc[-1, t * 2],data.iloc[-1, t * 2 + 1])))
+    angles_radians = np.radians(angles)
+    # Compute circular mean
+    mean_angle = circmean(angles_radians)
+    # Compute circular standard deviation
+    std_angle = circstd(angles_radians)
+    # Create a circular plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, polar=True)
+    # Plot the angles
+    ax.scatter(angles_radians, np.ones_like(angles_radians), marker='o')
+    # Plot the circular mean
+    ax.plot([mean_angle, mean_angle], [0, 1], color='r', linewidth=2)
+    # Add a circular standard deviation indicator
+    ax.fill_between([mean_angle - std_angle, mean_angle + std_angle], 0, 1, color='orange', alpha=0.3)
+    # Set the direction of 0 degrees to be counterclockwise
+    ax.set_theta_direction(1)
+    # Set the zero location of the angles to be at the bottom
+    ax.set_theta_zero_location('S')
+    # Remove radial ticks
+    ax.set_yticks([])
+    # Show the plot
 
 
 ## ----- Runing simulation
-def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio):
+def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio, trial, graphic):
 
     # import connectivity matrix
     if paradigm == "Simple double goals":
@@ -261,125 +296,145 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     ALT_MAT = np.copy(CON_MAT)
     ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
 
-    # Initialisation
+    # Create a dataframe to stock results
     heating = 100
-    Df, Act = initialise_dataframes(COL_IDS,simulation_time + heating)
-    expected_EPG = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
+    trial_df = pd.DataFrame(0.0, index=range(simulation_time+heating+1), columns=range(2*trial))
 
-    food_list = []
-    # Initialize food sources
-    if paradigm == "Food seeking":
+    # Repeat for every trial
+    for t in range(trial):
 
-        # randomly create food sources (x,y,radius)  
-        for f in range(food):
-            f_x = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
-            f_y = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
-            f_r = random.randint(5, 20)
-            food_list.append((f_x,f_y,f_r))
+        # Initialisation
+        Df, Act = initialise_dataframes(COL_IDS,simulation_time + heating)
+        expected_EPG = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
 
-    # Time loop
-    for i in range(simulation_time + heating):
+        food_list = []
+        # Initialize food sources
+        if paradigm == "Food seeking":
 
-        # Update CIU activity input
-        if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
-            Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
+            # randomly create food sources (x,y,radius)  
+            for f in range(food):
+                f_x = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
+                f_y = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
+                f_r = random.randint(5, 20)
+                food_list.append((f_x,f_y,f_r))
 
-        # Save real orientation
-        real_orientation = [0] * 8
-        real_orientation[int(CIU_activation(Df.loc[i, "Orientation"]))-1] = 1
-        expected_EPG.iloc[i] = real_orientation * 2
+        # Time loop
+        for i in range(simulation_time + heating):
 
-        # Update TS activity input (should be improved)
-        Act.loc[i, "TS"] = Df.loc[i, "Speed"]
+            # Update CIU activity input
+            if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
+                Act.loc[i, "CIU" + CIU_activation(Df.loc[i, "Orientation"])] = 1
 
-        # Update TR activity input (should be improved)
-        if i>5:
-            Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
+            # Save real orientation
+            real_orientation = [0] * 8
+            real_orientation[int(CIU_activation(Df.loc[i, "Orientation"]))-1] = 1
+            expected_EPG.iloc[i] = real_orientation * 2
 
-        # Introduce goal directions to PFL neurons 
-        if paradigm == "Simple double goals" and i > heating:
-            Act.iloc[i, Act.columns.get_loc("PFN1"):Act.columns.get_loc("PFN16") + 1] = generate_goal(ratio, sin_param)
+            # Update TS activity input (should be improved)
+            Act.loc[i, "TS"] = Df.loc[i, "Speed"]
 
-        # Check if the agent has reached food depending on the paradigm
-        if Df.loc[i,"Food"] == 0:
+            # Update TR activity input (should be improved)
+            if i>5:
+                Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
-            # Paradigm 1
-            if paradigm == "Timed exploration" and i>(heating + timer):
-                Df.loc[i:,"Food"] = 1
+            # Introduce goal directions to PFL neurons 
+            if paradigm == "Simple double goals" and i > heating:
+                Act.iloc[i, Act.columns.get_loc("PFN1"):Act.columns.get_loc("PFN16") + 1] = generate_goal(ratio, sin_param)
 
-            # Paradigm 2
-            elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
-                Df.loc[i:,"Food"] = 1
+            # Check if the agent has reached food depending on the paradigm
+            if Df.loc[i,"Food"] == 0:
 
-            # Paradigm 3
-            elif paradigm == "Food seeking":
-                for f in range(food):
-                    if euclidian_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
-                        Df.loc[i:,"Food"] = 1
+                # Paradigm 1
+                if paradigm == "Timed exploration" and i>(heating + timer):
+                    Df.loc[i:,"Food"] = 1
 
-        # Update activity vector depending on the inner state
-        if Df.loc[i,"Food"] == 0:
+                # Paradigm 2
+                elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
+                    Df.loc[i:,"Food"] = 1
 
-            # Update new activity with no hd → PFL (Alternative connectivity matrix)
-            Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
+                # Paradigm 3
+                elif paradigm == "Food seeking":
+                    for f in range(food):
+                        if euclidian_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
+                            Df.loc[i:,"Food"] = 1
 
-        elif Df.loc[i,"Food"] == 1:
+            # Update activity vector depending on the inner state
+            if Df.loc[i,"Food"] == 0:
 
-            # Update new activity with complete connectivity matrix
-            Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
+                # Update new activity with no hd → PFL (Alternative connectivity matrix)
+                Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
-        # Update rotational speed from PFL neurons
-        Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
+            elif Df.loc[i,"Food"] == 1:
 
-        # Update Orientation and position
-        if paradigm != "Debug rotation":
-            Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
-        elif i > int(heating + simulation_time/2):
-            Df.loc[i+1, "Orientation"] = noise_deviation
-        if i >= heating:
-            if i == heating and paradigm != "Simple double goals":
-                Act.iloc[i+1, Act.columns.get_loc("hd1"):Act.columns.get_loc("hd16") + 1] = [0] * 16
-            new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
-            Df.loc[i+1, "X"] = new_x
-            Df.loc[i+1, "Y"] = new_y
+                # Update new activity with complete connectivity matrix
+                Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
 
-        # Get sinusoid d7 shape after heating
-        if i == heating:
-            sin_list = []
+            # Update rotational speed from PFL neurons
+            Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
-            # Copy the dataframe for ploting
-            centered_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
+            # Update Orientation and position
+            if paradigm != "Debug rotation":
+                Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
+            elif i > int(heating + simulation_time/2):
+                Df.loc[i+1, "Orientation"] = noise_deviation
+            if i >= heating:
+                if i == heating and paradigm != "Simple double goals":
+                    Act.iloc[i+1, Act.columns.get_loc("hd1"):Act.columns.get_loc("hd16") + 1] = [0] * 16
+                new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
+                Df.loc[i+1, "X"] = new_x
+                Df.loc[i+1, "Y"] = new_y
 
-            # Iterate over the whole heating activity Dataframe
-            for j in range(4,heating):
+            # Get sinusoid d7 shape after heating
+            if i == heating:
+                sin_list = []
 
-                # Normalize the dataframe for ploting
-                d7_list = centered_d7.iloc[j,:].tolist()
-                while max(d7_list) != d7_list[3]:
-                    d7_list.append(d7_list.pop(0))
-                centered_d7.iloc[j,:] = d7_list
+                # Copy the dataframe for ploting
+                centered_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
 
-            r_squared = 1
-            while r_squared >= 1:
+                # Iterate over the whole heating activity Dataframe
+                for j in range(4,heating):
 
-                # Fit the sinusoid function
-                sin_param = fit_sinusoid(centered_d7.iloc[4:,:].median())
+                    # Normalize the dataframe for ploting
+                    d7_list = centered_d7.iloc[j,:].tolist()
+                    while max(d7_list) != d7_list[3]:
+                        d7_list.append(d7_list.pop(0))
+                    centered_d7.iloc[j,:] = d7_list
 
-                # compute r squared value
-                r_squared = sinusoid_r_squared(centered_d7.iloc[4:,:].median(), sin_param)
+                r_squared = 1
+                while r_squared >= 1:
 
-                print(sin_param)
-                print(r_squared)
+                    # Fit the sinusoid function
+                    sin_param = fit_sinusoid(centered_d7.iloc[4:,:].median())
 
-            # Graphical representation of the Delta7 sinusoidal fitting
-            sinusoid_plot(centered_d7.iloc[4:,:], sin_param)
+                    # compute r squared value
+                    r_squared = sinusoid_r_squared(centered_d7.iloc[4:,:].median(), sin_param)
 
-        # Stop simulation when the agent has returned to the nest
-        if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
-            break
+            # Stop simulation when the agent has returned to the nest
+            if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
+                Df = Df.iloc[:i+1,:]
+                break
+
+            # Stop simulating if the agent has reached the end of the paradigm
+            if paradigm == "Simple double goals" and euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
+                Df = Df.iloc[:i+1,:]
+                break
+
+        # Save results of the trial
+        trial_df[(t)*2] = Df["X"]
+        trial_df[(t)*2+1] = Df["Y"]
+        for k in range(i, trial_df.shape[0]):
+            trial_df.iloc[k,(t)*2], trial_df.iloc[k,(t)*2+1] = Df.loc[i,"X"], Df.loc[i,"Y"]
 
     # Graphical output
     Act = Act.iloc[heating:(i+2)]
     Df = Df.iloc[heating:(i+3)]
-    activity_heatmap(Act)
-    plot_stirring(Df, nest_size, food_list, paradigm, radius)
+    if graphic[0]==1:
+        activity_heatmap(Act) # Only last one
+    if graphic[1]==1:
+        plot_stirring(Df, nest_size, food_list, paradigm, radius) # Only last one
+    if graphic[2]==1:
+        circular_plot(trial_df, trial)
+    if graphic[3]==1:
+        sinusoid_plot(centered_d7.iloc[4:,:], sin_param) # Only last one
+    plt.show()
+
