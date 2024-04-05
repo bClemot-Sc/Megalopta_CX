@@ -20,8 +20,8 @@ def eddit_matrix(path):
     IDS_LIST = IDS.stack().dropna().tolist()
 
     # Rewrite the transposed matrix as a .csv file
-    T_MATRIX.to_csv("Theorical_connectivity_matrix.csv", header=False, index=False)
-    with open("Neurons_IDs.csv", 'w', newline='') as csvfile:
+    T_MATRIX.to_csv("Connectivity_matrices/Theorical_connectivity_matrix.csv", header=False, index=False)
+    with open("Connectivity_matrices/Neurons_IDs.csv", 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(IDS_LIST)
 

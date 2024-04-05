@@ -270,14 +270,14 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
 
     # import connectivity matrix
     if paradigm == "Simple double goals":
-        Eddit_matrix.eddit_matrix("Simplified_connectivity_matrices.xlsx")
-        CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
-        with open("Neurons_IDs.csv", "r") as file:
+        Eddit_matrix.eddit_matrix("Connectivity_matrices/Simplified_connectivity_matrices.xlsx")
+        CON_MAT = np.genfromtxt("Connectivity_matrices/Theorical_connectivity_matrix.csv", delimiter=",")
+        with open("Connectivity_matrices/Neurons_IDs.csv", "r") as file:
             COL_IDS = next(csv.reader(file, delimiter=","))
     else: 
-        Eddit_matrix.eddit_matrix("Theorical_connectivity_matrices.xlsx")
-        CON_MAT = np.genfromtxt("Theorical_connectivity_matrix.csv", delimiter=",")
-        with open("Neurons_IDs.csv", "r") as file:
+        Eddit_matrix.eddit_matrix("Connectivity_matrices/Theorical_connectivity_matrices.xlsx")
+        CON_MAT = np.genfromtxt("Connectivity_matrices/Theorical_connectivity_matrix.csv", delimiter=",")
+        with open("Connectivity_matrices/Neurons_IDs.csv", "r") as file:
             COL_IDS = next(csv.reader(file, delimiter=","))
 
     # Get IDs index
@@ -438,3 +438,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
         sinusoid_plot(centered_d7.iloc[4:,:], sin_param) # Only last one
     plt.show()
 
+    # Save results
+    Act.to_csv("Saved_results/Last_activity.csv", sep="/t", index=False) # Only last one
+    Df.to_csv("Saved_results/Agent_dataframe.csv", sep="/t", index=False) # Only last one
+    trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="/t", index=False)

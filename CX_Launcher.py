@@ -5,7 +5,6 @@
 ## ----- Import packages
 import customtkinter as ctk
 import CX_Script
-# test
 
 ## ----- Command functions
 
