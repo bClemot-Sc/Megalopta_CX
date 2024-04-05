@@ -439,6 +439,6 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     plt.show()
 
     # Save results
-    Act.to_csv("Saved_results/Last_activity.csv", sep="/t", index=False) # Only last one
-    Df.to_csv("Saved_results/Agent_dataframe.csv", sep="/t", index=False) # Only last one
-    trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="/t", index=False)
+    Act.to_csv("Saved_results/Last_activity.csv", sep="\t", index=False) # Only last one
+    Df.to_csv("Saved_results/Agent_dataframe.csv", sep="\t", index=False) # Only last one
+    trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="\t", index=False)

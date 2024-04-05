@@ -1,5 +1,5 @@
 #### GUI for CX modeling
-## Autor: Bastien Clémot
+## Author: Bastien Clémot
 
 
 ## ----- Import packages
