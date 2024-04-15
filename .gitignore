@@ -1,2 +1,6 @@
 __pycache__
 .vscode
+Agent_dataframe.csv
+Last_activity.csv
+Trial_dataframe.csv
+Last_goal_integration.csv

@@ -1,5 +1,10 @@
-threshold = 3
-path = "/mnt/c/Users/bclem/OneDrive/Documents/GitHub/Megalopta_CX/Drosophila_connectivity_data/Global_matrix_" + str(threshold) + ".txt"
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 
-print(threshold)
-print(path)
+DATA = pd.read_excel("Saved_results\Multiple_goal_integration.xlsx", sheet_name="Row_data", header=None)
+RATIOS = np.array(list(DATA.iloc[0,:]))
+RESULTS = np.array(DATA.iloc[1:,:].T)
+
+means = np.mean(RESULTS % 360, axis=1)
+print(means)

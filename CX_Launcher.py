@@ -1,4 +1,4 @@
-#### GUI for CX modeling
+#### GUI for CX modelling
 ## Author: Bastien Clémot
 
 
@@ -19,6 +19,8 @@ def show_parameters(*args):
         food_entry.grid_forget()
         ratio_label.grid_forget()
         ratio_entry.grid_forget()
+        distance_label.grid_forget()
+        distance_entry.grid_forget()
         timer_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
         timer_entry.grid(row=2, column=1, sticky="ew", padx=30)
         nest_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
@@ -31,6 +33,8 @@ def show_parameters(*args):
         timer_entry.grid_forget()
         ratio_label.grid_forget()
         ratio_entry.grid_forget()
+        distance_label.grid_forget()
+        distance_entry.grid_forget()
         radius_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
         radius_entry.grid(row=2, column=1, sticky="ew", padx=30)
         nest_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
@@ -43,6 +47,8 @@ def show_parameters(*args):
         timer_entry.grid_forget()
         ratio_label.grid_forget()
         ratio_entry.grid_forget()
+        distance_label.grid_forget()
+        distance_entry.grid_forget()
         food_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
         food_entry.grid(row=2, column=1, sticky="ew", padx=30)
         nest_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
@@ -59,6 +65,8 @@ def show_parameters(*args):
         ratio_entry.grid_forget()
         nest_label.grid_forget()
         nest_entry.grid_forget()
+        distance_label.grid_forget()
+        distance_entry.grid_forget()
 
     elif selected_option == "Simple double goals":
         timer_label.grid_forget()
@@ -67,10 +75,26 @@ def show_parameters(*args):
         food_entry.grid_forget()
         nest_label.grid_forget()
         nest_entry.grid_forget()
+        distance_label.grid_forget()
+        distance_entry.grid_forget()
         radius_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
         radius_entry.grid(row=2, column=1, sticky="ew", padx=30)
         ratio_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
         ratio_entry.grid(row=3, column=1, sticky="ew", padx=30)
+
+    elif selected_option == "Experimental bee v1":
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
+        nest_label.grid_forget()
+        nest_entry.grid_forget()
+        radius_label.grid_forget()
+        radius_entry.grid_forget()
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
+        food_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
+        food_entry.grid(row=2, column=1, sticky="ew", padx=30)
+        distance_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
+        distance_entry.grid(row=3, column=1, sticky="ew", padx=30)
 
 # Check for missing inputs and run simulation
 def run_simulation():
@@ -86,6 +110,7 @@ def run_simulation():
     error6_label.grid_forget()
     error7_label.grid_forget()
     error8_label.grid_forget()
+    error9_label.grid_forget()
 
     # Check for inputs and issues
     try:
@@ -102,7 +127,7 @@ def run_simulation():
     try:
         NOISE = float(noise_entry.get())
         if not 0.0 <= NOISE <= 90.0:
-                error2_label.grid(row=8+k, column=4, columnspan=2,padx=50, pady=10)
+                error2_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
                 error=1
                 k+=1 
     except:
@@ -113,7 +138,7 @@ def run_simulation():
     try:
         TRIAL = int(trial_entry.get())
         if not 1 <= TRIAL:
-                error8_label.grid(row=8+k, column=4, columnspan=2,padx=50, pady=10)
+                error8_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
                 error=1
                 k+=1 
     except:
@@ -149,8 +174,8 @@ def run_simulation():
             error=1
             k+=1 
     
-    FOOD = 5
-    if PARADIGM == "Food seeking":
+    FOOD = 0
+    if PARADIGM in ["Food seeking", "Experimental bee v1"]:
         try:
             FOOD = int(food_entry.get())
             if not 0.0 <= FOOD:
@@ -188,13 +213,27 @@ def run_simulation():
             error=1
             k+=1
 
+    DISTANCE = 0
+    if PARADIGM == "Experimental bee v1":
+        try:
+            string = distance_entry.get()
+            DISTANCE = [int(x) for x in string.split(',')]
+            if not all(x > 0 for x in DISTANCE) or len(DISTANCE) != FOOD:
+                error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                error=1
+                k+=1 
+        except:
+            error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+            error=1
+            k+=1 
+
     PERIOD = period_menu.get()
 
     GRAPHIC = [activity_button.get(), pathway_button.get(), circle_button.get(), sinusoid_button.get()]
 
     # Run the simulation
     if error==0:
-        CX_Script.run_function(TIME, PERIOD, NOISE, NEST, PARADIGM, TIMER, RADIUS, FOOD, RATIO, TRIAL, GRAPHIC)
+        CX_Script.run_function(TIME, PERIOD, NOISE, NEST, PARADIGM, TIMER, RADIUS, FOOD, RATIO, TRIAL, GRAPHIC, DISTANCE)
 
 
 ## ----- Configure GUI
@@ -282,7 +321,7 @@ if __name__ == "__main__":
     # Paradigm menu
     paradigm_var = ctk.StringVar(right_frame)
     paradigm_var.set("Timed exploration")
-    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Debug rotation", "Simple double goals"])
+    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Debug rotation", "Simple double goals", "Experimental bee v1"])
     paradigm_menu.grid(row=1, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters
@@ -317,6 +356,12 @@ if __name__ == "__main__":
     # Goal ratio entry
     ratio_entry = ctk.CTkEntry(right_frame, placeholder_text=0.5)
     ratio_entry.grid_forget()
+    # Distance food label
+    distance_label = ctk.CTkLabel(right_frame, text="→ Food sources distance:", font=ctk.CTkFont(size=20))
+    distance_label.grid_forget()
+    # Distance food entry
+    distance_entry = ctk.CTkEntry(right_frame, placeholder_text="200,150,170,210,190")
+    distance_entry.grid_forget()
 
     # Graphical output title
     graphic_title__label = ctk.CTkLabel(below_frame, text="Graphical outputs:", font=ctk.CTkFont(size=20, weight="bold"))
@@ -349,7 +394,8 @@ if __name__ == "__main__":
     error5_label = ctk.CTkLabel(root, text="Timer before homing behaviour should be a positive integer lower or equal to maximum simulation time.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error6_label = ctk.CTkLabel(root, text="Nest size should be a positive float value.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error7_label = ctk.CTkLabel(root, text="Ratio value should be a float between 0 and 1.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
-    error8_label = ctk.CTkLabel(root, text="Number of trials hould be a positive integer", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error8_label = ctk.CTkLabel(root, text="Number of trials should be a positive integer", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error9_label = ctk.CTkLabel(root, text="Number of distance should match number of food sources, be separated by comas and be a positive integer.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
     # Run button
     run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)

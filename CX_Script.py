@@ -1,10 +1,9 @@
 #### Script for modelling and testing the CX
-## Autor: Bastien Clémot
+## Author: Bastien Clémot
 
 
 ## ----- Import packages
 import csv
-import Eddit_matrix
 import math
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
@@ -16,33 +15,127 @@ from scipy.stats import circmean, circstd
 import seaborn as sns
 
 
+## ----- Import connectivity matrix and neuron IDs
+def import_connectivity(paradigm):
+    # Get path depending on paradigm
+    if paradigm == "Simple double goals":
+        path = "Connectivity_matrices/Simplified_connectivity_matrices.xlsx"
+    elif paradigm == "Experimental bee v1":
+        path = "Connectivity_matrices\Experimental_connectivity_matrices_v1.xlsx"
+    else:
+        path = "Connectivity_matrices/Theoretical_connectivity_matrices.xlsx"
+    # Open Excel sheets
+    MATRIX = pd.read_excel(path, sheet_name="Global", header=None)
+    IDS = pd.read_excel(path, sheet_name="IDs", header=None)
+    # Transpose connectivity matrix and convert IDs to list
+    T_MATRIX = MATRIX.T
+    COL_IDS = IDS.stack().dropna().tolist()
+    # Convert matrix to numpy array
+    CON_MAT = T_MATRIX.to_numpy()
+    return CON_MAT, COL_IDS
+
+
+## Get neuron index within the connectivity matrix
+def get_neuron_index(ids_list, food):
+    # Build a dictionary of all positions
+    index_groups = {
+        "IND_CIU": [i for i, element in enumerate(ids_list) if "CIU" in element],
+        "IND_TR": [i for i, element in enumerate(ids_list) if "TR" in element],
+        "IND_TS": [i for i, element in enumerate(ids_list) if "TS" in element or "LNO" in element],
+        "IND_EPG": [i for i, element in enumerate(ids_list) if "EPG" in element],
+        "IND_PEG": [i for i, element in enumerate(ids_list) if "PEG" in element],
+        "IND_PEN": [i for i, element in enumerate(ids_list) if "PEN" in element],
+        "IND_D7": [i for i, element in enumerate(ids_list) if "d7-" in element or "D7-" in element],
+        "IND_PFN": [i for i, element in enumerate(ids_list) if "PFN" in element],
+        "IND_PFNm": [i for i, element in enumerate(ids_list) if "PFNm" in element],
+        "IND_HD": [i for i, element in enumerate(ids_list) if "hd" in element or "hD" in element],
+        "IND_FBtR": [i for i, element in enumerate(ids_list) if "FBtR" in element],
+        "IND_PFNc": [i for i, element in enumerate(ids_list) if "PFNc" in element],
+        "IND_FBtD": [i for i, element in enumerate(ids_list) if "FBtD" in element],
+        "IND_FC": [i for i, element in enumerate(ids_list) if "FC" in element],
+        "IND_PFL": [i for i, element in enumerate(ids_list) if "PFL" in element]
+    }
+    for f in range(1,food+1):
+        index_groups["IND_FBtR" + str(f)] = [i for i, element in enumerate(ids_list) if "FBtR" + str(f) + "-" in element]
+    return index_groups
+
+
 ## ----- Initialise agent dataframe and neuron activity dataframe
-def initialise_dataframes(ids_list,time):
+def initialise_dataframes(ids_list, connectivity_matrix, time, food, paradigm):
     # Agent dataframe
     agent_df = pd.DataFrame(0.0, index=range(time+1), columns=["X", "Y", "Orientation", "Speed", "Rotation", "Food"])
     # Set speed to 1 for the whole simulation
     agent_df["Speed"] = 1.0
     agent_df["Food"] = 0
+    if paradigm == "Experimental bee v1":
+        # Update ids_list
+        neuron_index = get_neuron_index(ids_list)
+        ids_list = [id for index, id in enumerate(ids_list) if index not in neuron_index["IND_FBtR"]]
+        FBtR_list = []
+        for f in range(1,food+1):
+            for c in range(1,17):
+                FBtR_list.append("FBtR" + str(f) + "-" + str(c)) 
+        ids_list [neuron_index["IND_FBtR"][0]:neuron_index["IND_FBtR"][0]] = FBtR_list
+        # Connectivity matrix
+        padded_rows = np.zeros(((food*16)-16), connectivity_matrix.shape[1])
+        matrix_with_extra_rows = np.vstack((connectivity_matrix[:neuron_index["IND_FBtR"][-1]], padded_rows, connectivity_matrix[neuron_index["IND_FBtR"][-1]:]))
+        padded_columns = np.zeros((matrix_with_extra_rows.shape[0], (food*16)-16))
+        connectivity_matrix = np.hstack((matrix_with_extra_rows[:, :neuron_index["IND_FBtR"][-1]], padded_columns, matrix_with_extra_rows[:, neuron_index["IND_FBtR"][-1]:]))
+        FBtR_to_PFNc = connectivity_matrix[np.ix_(neuron_index["IND_PFNc"],neuron_index["IND_FBtR"])]
+        for f in range(1,food):
+            FBtR_index = [x + 16 * f for x in neuron_index["IND_FBtR"]]
+            PFNc_index = [x + 16 * food for x in neuron_index["IND_PFNc"]]
+            connectivity_matrix[np.ix_(PFNc_index, FBtR_index)]
     # Activity dataframe
     activity_df = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
-    return agent_df, activity_df
+    return agent_df, activity_df, connectivity_matrix, ids_list
 
 
-## ----- Linear activation function
-def linear_activation(activity_vector):
-    return np.clip(activity_vector, 0, 1, out=activity_vector)
+## ----- Initialise food sources in the environment
+def initialise_food(paradigm, nest_size, food, radius, distance):
+    food_list = []
+    # Check paradigm
+    if paradigm == "Food seeking":
+        # Randomly create food sources (x,y,radius)
+        for f in range(food):
+            f_radius = random.randint(nest_size+50, 200)
+            f_angle = random.uniform(0, 2*math.pi)
+            f_x = round(f_radius * math.cos(f_angle))
+            f_y = round(radius * math.sin(f_angle))
+            f_r = random.randint(5, 20)
+            food_list.append((f_x,f_y,f_r))
+    elif paradigm == "Experimental bee v1":
+        # Randomly create food sources (x,y,radius)
+        for f in distance:
+            f_angle = random.uniform(0, 2*math.pi)
+            f_x = round(distance * math.cos(f_angle))
+            f_y = round(distance * math.sin(f_angle))
+            f_r = random.randint(5, 20)
+            food_list.append((f_x,f_y,f_r))
+    return food_list
 
 
-## ----- Sinusoidal function
-def sinusoid(x, a, b, c, d):
-    return a * np.sin(b * x + c) + d
+## ----- Address heading direction (relative to a South landscape cue) to CIU neurons
+def CIU_activation(heading_direction):
+    relative_heading = (-heading_direction) % 360
+    heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
+    closest_heading = min(heading_list, key=lambda x: abs(x - relative_heading))
+    heading_id = heading_list.index(closest_heading % 360) + 1
+    return str(heading_id)
 
 
-## ----- Fit and extract signal shape parameters
-def fit_sinusoid(activity_vector):
-    x = np.arange(16)
-    param_sinusoid, _ = curve_fit(sinusoid, x, activity_vector, p0=[-0.6, 0.8, -4.4, 0.4])
-    return param_sinusoid
+## ----- Address turning direction to TR neurons (orientation comparison)
+def compare_headings(previous_heading, new_heading):
+    TRr = 0
+    TRl = 0
+    heading_difference = (new_heading - previous_heading) % 360
+    if heading_difference == 0:
+        pass
+    elif heading_difference <= 180:
+        TRl = 1
+    else:
+        TRr = 1
+    return TRl, TRr
 
 
 ## ----- Generate goal directions
@@ -62,7 +155,72 @@ def generate_goal(ratio, param):
         goal1.append(goal1.pop(0))
     while max(goal2) != goal2[4]:
         goal2.append(goal2.pop(0))
-    return [goal1[i] + goal2[i] for i in range(len(goal1))]
+    goal = [goal1[i] + goal2[i] for i in range(len(goal1))]
+    final_goal = [x if x >= 0 else 0 for x in goal]
+    return final_goal
+
+
+## ----- Calculate euclidean distance between two points
+def euclidean_distance(x1,y1,x2,y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+
+## ----- Calculate angle between two vectors (vector comparison)
+def angle_between_vectors(v1,v2):
+    dot_product = sum(a*b for a, b in zip(v1, v2))
+    magnitude_v1 = math.sqrt(sum(a**2 for a in v1))
+    magnitude_v2 = math.sqrt(sum(b**2 for b in v2))
+    return math.acos(dot_product / (magnitude_v1 * magnitude_v2))
+
+
+## ----- Detect food sources within insect's vision
+def insect_vision(agent_position, agent_orientation, food_sources):
+    vision_radius = 500
+    vision_width = 45
+    visible_goals = []
+    closest_goal = [0, 10000]
+    maximal_distance = 0
+    # Calculate the vector representing the agent's heading
+    agent_heading_vector = [math.cos(math.radians(agent_orientation)), math.sin(math.radians(agent_orientation))]
+    # Check for each food source
+    for number, food_position in enumerate(food_sources):
+        # Calculate the vector from the agent to the food source
+        agent_to_food_vector = [food_position[0] - agent_position[0], food_position[1] - agent_position[1]]
+        # Calculate the distance from the agent to the food source
+        dist_to_food = euclidean_distance(agent_position[0], agent_position[1], food_position[0], food_position[1])
+        # Save maximal distance
+        if dist_to_food > maximal_distance:
+            maximal_distance = dist_to_food
+        # Check if the food source is within the vision radius
+        if dist_to_food <= vision_radius + food_position[2]:
+            # Calculate the angle between the center and the border of the food source from the agent's perspective
+            angle_food_radius = math.degrees(math.atan(food_position[2]/dist_to_food))
+            # Calculate the angle from heading vector to food vector
+            angle_to_food = math.degrees(angle_between_vectors(agent_heading_vector,agent_to_food_vector))
+            # Check if the food source is within the vision width
+            if angle_to_food <= vision_width/2 + angle_food_radius:
+                visible_goals.append(number)
+                # Check if closest goal
+                if dist_to_food < closest_goal[1]:
+                    closest_goal = [number, dist_to_food]
+    return visible_goals, closest_goal, maximal_distance
+
+
+## ----- Linear activation function
+def linear_activation(activity_vector):
+    return np.clip(activity_vector, 0, 1, out=activity_vector)
+
+
+## ----- Sinusoidal function
+def sinusoid(x, a, b, c, d):
+    return a * np.sin(b * x + c) + d
+
+
+## ----- Fit and extract signal shape parameters
+def fit_sinusoid(activity_vector):
+    x = np.arange(16)
+    param_sinusoid, _ = curve_fit(sinusoid, x, activity_vector, p0=[-0.6, 0.8, -4.4, 0.4])
+    return param_sinusoid
 
 
 ## ----- Compute r squared value
@@ -78,34 +236,6 @@ def sinusoid_r_squared(y_true, param):
     residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
     r_squared = 1 - (residual_sum_of_squares / total_sum_of_squares)
     return r_squared
-
-
-## ----- Compute euclidian distance between two points
-def euclidian_distance(x1,y1,x2,y2):
-    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-
-
-## ----- Adress heading direction (relative to a South landscape cue) to CIU neurons
-def CIU_activation(heading_direction):
-    relative_heading = (-heading_direction) % 360
-    heading_list = [0, 45, 90, 135, 180, 225, 270, 315, 360]
-    closest_heading = min(heading_list, key=lambda x: abs(x - relative_heading))
-    heading_id = heading_list.index(closest_heading % 360) + 1
-    return str(heading_id)
-
-
-## ----- Adress turning direction to TR neurons
-def compare_headings(previous_heading, new_heading):
-    TRr = 0
-    TRl = 0
-    heading_difference = (new_heading - previous_heading) % 360
-    if heading_difference == 0:
-        pass
-    elif heading_difference <= 180:
-        TRl = 1
-    else:
-        TRr = 1
-    return TRl, TRr
 
 
 ## ----- Update position with translational speed and orientation
@@ -137,8 +267,8 @@ def get_angle(coo1,coo2):
 ## ----- Activity heatmap
 def activity_heatmap(activity_df):
     Act_df = activity_df.T
-    sns.set(style="whitegrid")
-    # Processings IDs function
+    sns.set_theme(style="whitegrid")
+    # Processing IDs function
     def clean_ids(ids):
         return ids.split("-")[0] if "-" in ids else "".join(c for c in ids if not c.isdigit())
     # Clean all index labels
@@ -173,13 +303,13 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     # Initial time index
     initial_time = 0
     # Plot the agent journey
-    line0, = ax.plot(Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
-    line1, = ax.plot(Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
+    line0, = ax.plot(-Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
+    line1, = ax.plot(-Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
     # Plot the nest size
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
     # Check paradigm for border representation
-    if paradigm == "Till border exploration" or "Simple double goals":
+    if paradigm == "Till border exploration" or paradigm == "Simple double goals":
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
     # Check paradigm for food source representation
@@ -204,11 +334,11 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     def update(val):
         time_index = int(time_slider.val)
         if time_index < shift:
-            line0.set_data(Df["Y"][:time_index], -Df["X"][:time_index])
+            line0.set_data(-Df["Y"][:time_index], -Df["X"][:time_index])
             line1.set_data(0,0)
         else:
-            line0.set_data(Df["Y"][:shift], -Df["X"][:shift])
-            line1.set_data(Df["Y"][shift:time_index], -Df["X"][shift:time_index])
+            line0.set_data(-Df["Y"][:shift], -Df["X"][:shift])
+            line1.set_data(-Df["Y"][shift:time_index], -Df["X"][shift:time_index])
         fig.canvas.draw_idle()
     # Attach the update function to the slider
     time_slider.on_changed(update)
@@ -241,7 +371,7 @@ def circular_plot(data, trial):
     # Get angle values
     angles = []
     for t in range(trial):
-        angles.append(get_angle((0,0),(data.iloc[-1, t * 2],data.iloc[-1, t * 2 + 1])))
+        angles.append(get_angle((0,0),(-data.iloc[-1, t * 2 + 1],-data.iloc[-1, t * 2]))+90)
     angles_radians = np.radians(angles)
     # Compute circular mean
     mean_angle = circmean(angles_radians)
@@ -256,70 +386,56 @@ def circular_plot(data, trial):
     ax.plot([mean_angle, mean_angle], [0, 1], color='r', linewidth=2)
     # Add a circular standard deviation indicator
     ax.fill_between([mean_angle - std_angle, mean_angle + std_angle], 0, 1, color='orange', alpha=0.3)
-    # Set the direction of 0 degrees to be counterclockwise
+    # Set the direction of 0 degrees to be counter-clockwise
     ax.set_theta_direction(1)
     # Set the zero location of the angles to be at the bottom
     ax.set_theta_zero_location('S')
     # Remove radial ticks
     ax.set_yticks([])
     # Show the plot
+    print("Circular mean: ", mean_angle)
+    print("Circular standard deviation: ", std_angle)
+    with open("Saved_results/Last_goal_integration.csv", 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(angles)
 
 
-## ----- Runing simulation
-def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio, trial, graphic):
+## ----- Running simulation
+def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio, trial, graphic, distance):
 
-    # import connectivity matrix
-    if paradigm == "Simple double goals":
-        Eddit_matrix.eddit_matrix("Connectivity_matrices/Simplified_connectivity_matrices.xlsx")
-        CON_MAT = np.genfromtxt("Connectivity_matrices/Theorical_connectivity_matrix.csv", delimiter=",")
-        with open("Connectivity_matrices/Neurons_IDs.csv", "r") as file:
-            COL_IDS = next(csv.reader(file, delimiter=","))
-    else: 
-        Eddit_matrix.eddit_matrix("Connectivity_matrices/Theorical_connectivity_matrices.xlsx")
-        CON_MAT = np.genfromtxt("Connectivity_matrices/Theorical_connectivity_matrix.csv", delimiter=",")
-        with open("Connectivity_matrices/Neurons_IDs.csv", "r") as file:
-            COL_IDS = next(csv.reader(file, delimiter=","))
+    ''' Initialisation '''
 
-    # Get IDs index
-    IND_PEN = [i for i, element in enumerate(COL_IDS) if "PEN" in element]
-    IND_EPG = [i for i, element in enumerate(COL_IDS) if "EPG" in element]
-    IND_PEG = [i for i, element in enumerate(COL_IDS) if "PEG" in element]
-    IND_TR = [i for i, element in enumerate(COL_IDS) if "TR" in element]
-    IND_D7 = [i for i, element in enumerate(COL_IDS) if "d7-" in element]
-    IND_CIU = [i for i, element in enumerate(COL_IDS) if "CIU" in element]
-    IND_PFN = [i for i, element in enumerate(COL_IDS) if "PFN" in element]
-    IND_PFL = [i for i, element in enumerate(COL_IDS) if "PFL" in element]
-    IND_HD = [i for i, element in enumerate(COL_IDS) if "hd" in element]
-    IND_TS = [i for i, element in enumerate(COL_IDS) if "TS" in element]
+    # import connectivity matrix neuron IDs list
+    CON_MAT, COL_IDS = import_connectivity(paradigm)
 
-    # Create alternative matrix when no food 
-    ALT_MAT = np.copy(CON_MAT)
-    ALT_MAT[np.ix_(IND_PFL,IND_HD)] = 0
+    # Pre-simulation heating
+    heating = 100
 
     # Create a dataframe to stock results
-    heating = 100
     trial_df = pd.DataFrame(0.0, index=range(simulation_time+heating+1), columns=range(2*trial))
 
     # Repeat for every trial
     for t in range(trial):
+            
+        # Initialise dataframes
+        Df, Act, CON_MAT, COL_IDS = initialise_dataframes(COL_IDS, CON_MAT, simulation_time + heating, food, paradigm)
+        expected_heading = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
 
-        # Initialisation
-        Df, Act = initialise_dataframes(COL_IDS,simulation_time + heating)
-        expected_EPG = pd.DataFrame(0.0, index=range(simulation_time + heating + 1), columns=(range(16)))
+        # Get neurons index
+        NEURON_IND = get_neuron_index(COL_IDS, food)
 
-        food_list = []
-        # Initialize food sources
-        if paradigm == "Food seeking":
-
-            # randomly create food sources (x,y,radius)  
-            for f in range(food):
-                f_x = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
-                f_y = random.choice([random.randint(-200, -nest_size-50), random.randint(nest_size+50, 200)])
-                f_r = random.randint(5, 20)
-                food_list.append((f_x,f_y,f_r))
+        # Create alternative matrix when no food 
+        if paradigm in ["Timed exploration", "Till border exploration", "Food seeking"]:
+            ALT_MAT = np.copy(CON_MAT)
+            ALT_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_HD"])] = 0
+            
+        # Initialise food sources
+        food_list = initialise_food(paradigm, nest_size, food, radius, distance)
 
         # Time loop
         for i in range(simulation_time + heating):
+
+            ''' External input to neurons '''
 
             # Update CIU activity input
             if time_period == "Day" or (time_period == "Night" and i < simulation_time/2):
@@ -328,18 +444,32 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             # Save real orientation
             real_orientation = [0] * 8
             real_orientation[int(CIU_activation(Df.loc[i, "Orientation"]))-1] = 1
-            expected_EPG.iloc[i] = real_orientation * 2
+            expected_heading.iloc[i] = real_orientation * 2
 
-            # Update TS activity input (should be improved)
+            # Update TS activity input
             Act.loc[i, "TS"] = Df.loc[i, "Speed"]
 
-            # Update TR activity input (should be improved)
+            # Update TR activity input
             if i>5:
                 Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
-            # Introduce goal directions to PFL neurons 
+            # Introduce goal directions to PFN neurons 
             if paradigm == "Simple double goals" and i > heating:
-                Act.iloc[i, Act.columns.get_loc("PFN1"):Act.columns.get_loc("PFN16") + 1] = generate_goal(ratio, sin_param)
+                Act.iloc[i, NEURON_IND["IND_PFN"]] = generate_goal(ratio, sin_param)
+
+            # Implement reward to FBtR neurons
+            if paradigm == "Experimental bee v1" and i>heating:
+                visible_food, closest_food, maximal_distance = insect_vision((Df.loc[i,"X"],Df.loc[i,"Y"]), Df.loc[i,"Orientation"], food_list)
+                for v in visible_food:
+                    Act.iloc[i, NEURON_IND["IND_FBtR"+str(v+1)]] = [0.5] * 16
+
+                # Implement distance to FBtD neurons
+                Act.iloc[i, NEURON_IND["IND_FBtD"]] = [closest_food[1]/maximal_distance*0.8] * 16
+
+                # Path integration to last seen food source
+                if visible_food:
+                    FBt_gate = Act.iloc[i, NEURON_IND["IND_HD"]]
+
 
             # Check if the agent has reached food depending on the paradigm
             if Df.loc[i,"Food"] == 0:
@@ -349,14 +479,18 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                     Df.loc[i:,"Food"] = 1
 
                 # Paradigm 2
-                elif paradigm == "Till border exploration" and euclidian_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
+                elif paradigm == "Till border exploration" and euclidean_distance(0,0,Df.loc[i,"X"],Df.loc[i,"Y"])>radius:
                     Df.loc[i:,"Food"] = 1
 
                 # Paradigm 3
                 elif paradigm == "Food seeking":
                     for f in range(food):
-                        if euclidian_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
+                        if euclidean_distance(food_list[f][0],food_list[f][1],Df.loc[i,"X"],Df.loc[i,"Y"]) < food_list[f][2]:
                             Df.loc[i:,"Food"] = 1
+
+                # Paradigm 4
+                elif paradigm == "Simple double goals":
+                    Df.loc[i:,"Food"] = 1
 
             # Update activity vector depending on the inner state
             if Df.loc[i,"Food"] == 0:
@@ -378,8 +512,6 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             elif i > int(heating + simulation_time/2):
                 Df.loc[i+1, "Orientation"] = noise_deviation
             if i >= heating:
-                if i == heating and paradigm != "Simple double goals":
-                    Act.iloc[i+1, Act.columns.get_loc("hd1"):Act.columns.get_loc("hd16") + 1] = [0] * 16
                 new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
                 Df.loc[i+1, "X"] = new_x
                 Df.loc[i+1, "Y"] = new_y
@@ -388,34 +520,34 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             if i == heating:
                 sin_list = []
 
-                # Copy the dataframe for ploting
-                centered_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
+                # Copy the dataframe for plotting
+                centred_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
 
                 # Iterate over the whole heating activity Dataframe
                 for j in range(4,heating):
 
-                    # Normalize the dataframe for ploting
-                    d7_list = centered_d7.iloc[j,:].tolist()
+                    # Normalize the dataframe for plotting
+                    d7_list = centred_d7.iloc[j,:].tolist()
                     while max(d7_list) != d7_list[3]:
                         d7_list.append(d7_list.pop(0))
-                    centered_d7.iloc[j,:] = d7_list
+                    centred_d7.iloc[j,:] = d7_list
 
                 r_squared = 1
                 while r_squared >= 1:
 
                     # Fit the sinusoid function
-                    sin_param = fit_sinusoid(centered_d7.iloc[4:,:].median())
+                    sin_param = fit_sinusoid(centred_d7.iloc[4:,:].median())
 
                     # compute r squared value
-                    r_squared = sinusoid_r_squared(centered_d7.iloc[4:,:].median(), sin_param)
+                    r_squared = sinusoid_r_squared(centred_d7.iloc[4:,:].median(), sin_param)
 
             # Stop simulation when the agent has returned to the nest
-            if euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
+            if euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
                 Df = Df.iloc[:i+1,:]
                 break
 
             # Stop simulating if the agent has reached the end of the paradigm
-            if paradigm == "Simple double goals" and euclidian_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
+            if paradigm == "Simple double goals" and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
                 Df = Df.iloc[:i+1,:]
                 break
 
@@ -425,9 +557,14 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
         for k in range(i, trial_df.shape[0]):
             trial_df.iloc[k,(t)*2], trial_df.iloc[k,(t)*2+1] = Df.loc[i,"X"], Df.loc[i,"Y"]
 
-    # Graphical output
+    # Save results
     Act = Act.iloc[heating:(i+2)]
     Df = Df.iloc[heating:(i+3)]
+    Act.to_csv("Saved_results/Last_activity.csv", sep="\t", index=False) # Only last one
+    Df.to_csv("Saved_results/Agent_dataframe.csv", sep="\t", index=False) # Only last one
+    trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="\t", index=False)
+
+    # Graphical output
     if graphic[0]==1:
         activity_heatmap(Act) # Only last one
     if graphic[1]==1:
@@ -435,10 +572,5 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     if graphic[2]==1:
         circular_plot(trial_df, trial)
     if graphic[3]==1:
-        sinusoid_plot(centered_d7.iloc[4:,:], sin_param) # Only last one
+        sinusoid_plot(centred_d7.iloc[4:,:], sin_param) # Only last one
     plt.show()
-
-    # Save results
-    Act.to_csv("Saved_results/Last_activity.csv", sep="\t", index=False) # Only last one
-    Df.to_csv("Saved_results/Agent_dataframe.csv", sep="\t", index=False) # Only last one
-    trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="\t", index=False)

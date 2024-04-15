@@ -1,15 +1,14 @@
 # Central complex model
-#### Autor: Bastien Clémot
+#### Author: Bastien Clémot
 
 
 ## Files
 - **CX_Launcher.py :** The only script that needs to be run. It includes the GUI and calls the CX script.
 - **CX_Script.py :** Script containing all the functions for the CX model to work. It also includs the simulation loop.
-- **Eddit_matrix.py :** Script to convert Excel connectivity matrices to readable text files for the simulation loop.
 - **Connectivity_matrices folder :** Contain all the adjacency matrices used for the paradigms.
 - **Drosophila_connectivity_data folder :** Contain visualisation for the actual Drosophila connectivity data.
 - **Optimization_algorithm folder :** Contain attempts to optimise connectivity matrices.
-- **Saved_results folder :** Where all the results obtained from the simulation loop are stored.
+- **Saved_results folder :** Where all the results lastly obtained from the simulation loop are stored.
 
 
 ## References
