@@ -499,6 +499,10 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 Act.iloc[i+1] = linear_activation(np.dot(ALT_MAT, Act.iloc[i]))
 
             elif Df.loc[i,"Food"] == 1:
+                
+                NOISE_MAT = np.copy(CON_MAT)
+                to_noise = NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])]
+                NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])] = NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])] * ((np.random.rand(to_noise.shape[0], to_noise.shape[1])*.4)+.8)
 
                 # Update new activity with complete connectivity matrix
                 Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
