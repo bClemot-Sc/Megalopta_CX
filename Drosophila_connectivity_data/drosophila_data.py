@@ -3,9 +3,9 @@
 
 
 ## ----- VARIABLES
-threshold = 50 # Integer
+threshold = 20 # Integer
 direction = "None" # "None", "Toward_PFL", "From_PFL"
-plot = ["Network", "Dendrogram", "Ranking"] # "Network" and/ or "Dendrogram" and/or "Ranking"
+plot_decision = ["Dendrogram", "Ranking"] # "Network" and/ or "Dendrogram" and/or "Ranking"
 
 ## ----- Import packages
 import csv
@@ -165,7 +165,7 @@ for neurone in neurone_names:
 neurone_names = result
 
 ## Calculate cosine distance
-if "Dendrogram" in plot:
+if "Dendrogram" in plot_decision:
     # Convert matrix to numpy array
     adjacency_matrix = global_matrix.values
     # Replace 0s with a small value
@@ -182,6 +182,7 @@ if "Dendrogram" in plot:
     plt.title('Hierarchical Clustering Dendrogram')
     plt.xlabel('Distance')
     plt.ylabel('Node')
+    plt.show()
 
 # Adapt matrix input
 from_list = []
@@ -233,7 +234,7 @@ type_to_color = {
 neuron_color = {neuron: type_to_color[type_id] for neuron, type_id in neuron_to_type.items()}
 
 # Plot Graph
-if "Network" in plot:
+if "Network" in plot_decision:
     print('Graph in progress...')
     Graph(G,
         node_color=neuron_color, arrows = False,
@@ -242,9 +243,10 @@ if "Network" in plot:
         node_layout='community', node_layout_kwargs=dict(node_to_community=neuron_to_type),
         edge_layout='bundled', edge_layout_kwargs=dict(k=2000),
     )
+    plt.show()
 
 ## ----- classification of all neurons connecting toward PFLs
-if "Ranking" in plot:
+if "Ranking" in plot_decision:
     neuron_rootIDs = toward_matrix.iloc[:,0].values
     neuron_rootIDs = [int(_) for _ in neuron_rootIDs]
     df_neuron_rootIDs = pd.DataFrame({"root_id": neuron_rootIDs})
@@ -256,5 +258,3 @@ if "Ranking" in plot:
     df_sorted = toward_matrix.sort_values(by="row_sum", ascending=False)
     df_sorted = df_sorted.loc[:,("row_sum","name")]
     df_sorted.to_csv("Drosophila_connectivity_data/Sorted_neurons_to_PFL.csv", index=False)
-
-plt.show()

@@ -1,38 +1,14 @@
-import pandas as pd
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from scipy.cluster.hierarchy import linkage, dendrogram
-import matplotlib.pyplot as plt
+# Define a sample function for mutation
+def mutation(individual, connectivity_anthropy, neuron_anthropy):
+    return individual * 2  # Just doubling the individual for demonstration
 
-# Node names
-node_names = ['A', 'B', 'C', 'D', 'E']
+# Sample values for ind_list, connectivity_anthropy, and neuron_anthropy
+ind_list = [1, 2, 3, 4, 5]
+connectivity_anthropy = 0.5
+neuron_anthropy = 0.3
 
-# Sample adjacency matrix stored as a pandas DataFrame
-data = {
-    'A': [1.0, 2.0, 1.5, 1.0, 1.0],
-    'B': [2.0, 1.0, 1.0, 1.8, 1.0],
-    'C': [1.5, 1.0, 1.0, 1.2, 1.0],
-    'D': [1.0, 1.8, 1.2, 1.0, 1.5],
-    'E': [1.0, 1.0, 1.0, 1.5, 1.0]
-}
-adjacency_df = pd.DataFrame(data, index=node_names)
+# Execute the line of code
+new_list = [ind_list[0], ind_list[1]] + [mutation(ind, connectivity_anthropy, neuron_anthropy) for ind in ind_list[2:]]
 
-# Convert DataFrame to numpy array
-adjacency_matrix = adjacency_df.values
-
-# Normalize adjacency matrix to range [-1, 1]
-normalized_adjacency_matrix = adjacency_matrix / np.sqrt(np.outer(np.diag(adjacency_matrix), np.diag(adjacency_matrix)))
-
-# Compute cosine similarity
-cosine_sim = cosine_similarity(normalized_adjacency_matrix)
-
-# Compute hierarchical clustering
-linkage_matrix = linkage(cosine_sim, method='complete', metric='cosine')
-
-# Plot dendrogram with node names vertically
-plt.figure(figsize=(8, 10))
-dendrogram(linkage_matrix, labels=node_names, orientation='right')
-plt.title('Hierarchical Clustering Dendrogram')
-plt.xlabel('Distance')
-plt.ylabel('Node')
-plt.show()
+# Print the result
+print(new_list)

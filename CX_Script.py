@@ -20,8 +20,6 @@ def import_connectivity(paradigm):
     # Get path depending on paradigm
     if paradigm == "Simple double goals":
         path = "Connectivity_matrices/Simplified_connectivity_matrices.xlsx"
-    elif paradigm == "Experimental bee v1":
-        path = "Connectivity_matrices\Experimental_connectivity_matrices_v1.xlsx"
     else:
         path = "Connectivity_matrices/Theoretical_connectivity_matrices.xlsx"
     # Open Excel sheets
@@ -67,51 +65,22 @@ def initialise_dataframes(ids_list, connectivity_matrix, time, food, paradigm):
     # Set speed to 1 for the whole simulation
     agent_df["Speed"] = 1.0
     agent_df["Food"] = 0
-    if paradigm == "Experimental bee v1":
-        # Update ids_list
-        neuron_index = get_neuron_index(ids_list)
-        ids_list = [id for index, id in enumerate(ids_list) if index not in neuron_index["IND_FBtR"]]
-        FBtR_list = []
-        for f in range(1,food+1):
-            for c in range(1,17):
-                FBtR_list.append("FBtR" + str(f) + "-" + str(c)) 
-        ids_list [neuron_index["IND_FBtR"][0]:neuron_index["IND_FBtR"][0]] = FBtR_list
-        # Connectivity matrix
-        padded_rows = np.zeros(((food*16)-16), connectivity_matrix.shape[1])
-        matrix_with_extra_rows = np.vstack((connectivity_matrix[:neuron_index["IND_FBtR"][-1]], padded_rows, connectivity_matrix[neuron_index["IND_FBtR"][-1]:]))
-        padded_columns = np.zeros((matrix_with_extra_rows.shape[0], (food*16)-16))
-        connectivity_matrix = np.hstack((matrix_with_extra_rows[:, :neuron_index["IND_FBtR"][-1]], padded_columns, matrix_with_extra_rows[:, neuron_index["IND_FBtR"][-1]:]))
-        FBtR_to_PFNc = connectivity_matrix[np.ix_(neuron_index["IND_PFNc"],neuron_index["IND_FBtR"])]
-        for f in range(1,food):
-            FBtR_index = [x + 16 * f for x in neuron_index["IND_FBtR"]]
-            PFNc_index = [x + 16 * food for x in neuron_index["IND_PFNc"]]
-            connectivity_matrix[np.ix_(PFNc_index, FBtR_index)]
     # Activity dataframe
     activity_df = pd.DataFrame(0.0, index=range(time+1), columns=ids_list)
     return agent_df, activity_df, connectivity_matrix, ids_list
 
 
 ## ----- Initialise food sources in the environment
-def initialise_food(paradigm, nest_size, food, radius, distance):
+def initialise_food(paradigm, nest_size, food, radius):
     food_list = []
     # Check paradigm
-    if paradigm == "Food seeking":
-        # Randomly create food sources (x,y,radius)
-        for f in range(food):
-            f_radius = random.randint(nest_size+50, 200)
-            f_angle = random.uniform(0, 2*math.pi)
-            f_x = round(f_radius * math.cos(f_angle))
-            f_y = round(radius * math.sin(f_angle))
-            f_r = random.randint(5, 20)
-            food_list.append((f_x,f_y,f_r))
-    elif paradigm == "Experimental bee v1":
-        # Randomly create food sources (x,y,radius)
-        for f in distance:
-            f_angle = random.uniform(0, 2*math.pi)
-            f_x = round(distance * math.cos(f_angle))
-            f_y = round(distance * math.sin(f_angle))
-            f_r = random.randint(5, 20)
-            food_list.append((f_x,f_y,f_r))
+    for _ in range(food):
+        f_radius = random.randint(nest_size+50, 200)
+        f_angle = random.uniform(0, 2*math.pi)
+        f_x = round(f_radius * math.cos(f_angle))
+        f_y = round(radius * math.sin(f_angle))
+        f_r = random.randint(5, 20)
+        food_list.append((f_x,f_y,f_r))
     return food_list
 
 
@@ -171,39 +140,6 @@ def angle_between_vectors(v1,v2):
     magnitude_v1 = math.sqrt(sum(a**2 for a in v1))
     magnitude_v2 = math.sqrt(sum(b**2 for b in v2))
     return math.acos(dot_product / (magnitude_v1 * magnitude_v2))
-
-
-## ----- Detect food sources within insect's vision
-def insect_vision(agent_position, agent_orientation, food_sources):
-    vision_radius = 500
-    vision_width = 45
-    visible_goals = []
-    closest_goal = [0, 10000]
-    maximal_distance = 0
-    # Calculate the vector representing the agent's heading
-    agent_heading_vector = [math.cos(math.radians(agent_orientation)), math.sin(math.radians(agent_orientation))]
-    # Check for each food source
-    for number, food_position in enumerate(food_sources):
-        # Calculate the vector from the agent to the food source
-        agent_to_food_vector = [food_position[0] - agent_position[0], food_position[1] - agent_position[1]]
-        # Calculate the distance from the agent to the food source
-        dist_to_food = euclidean_distance(agent_position[0], agent_position[1], food_position[0], food_position[1])
-        # Save maximal distance
-        if dist_to_food > maximal_distance:
-            maximal_distance = dist_to_food
-        # Check if the food source is within the vision radius
-        if dist_to_food <= vision_radius + food_position[2]:
-            # Calculate the angle between the center and the border of the food source from the agent's perspective
-            angle_food_radius = math.degrees(math.atan(food_position[2]/dist_to_food))
-            # Calculate the angle from heading vector to food vector
-            angle_to_food = math.degrees(angle_between_vectors(agent_heading_vector,agent_to_food_vector))
-            # Check if the food source is within the vision width
-            if angle_to_food <= vision_width/2 + angle_food_radius:
-                visible_goals.append(number)
-                # Check if closest goal
-                if dist_to_food < closest_goal[1]:
-                    closest_goal = [number, dist_to_food]
-    return visible_goals, closest_goal, maximal_distance
 
 
 ## ----- Linear activation function
@@ -315,7 +251,7 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     # Check paradigm for food source representation
     if paradigm == "Food seeking":
         for f in range(len(food_list)):
-            food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
+            food_source = plt.Circle((-food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
     # Check paradigm for goal directions
     if paradigm == "Simple double goals":
@@ -392,16 +328,13 @@ def circular_plot(data, trial):
     ax.set_theta_zero_location('S')
     # Remove radial ticks
     ax.set_yticks([])
-    # Show the plot
-    print("Circular mean: ", mean_angle)
-    print("Circular standard deviation: ", std_angle)
     with open("Saved_results/Last_goal_integration.csv", 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(angles)
 
 
 ## ----- Running simulation
-def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio, trial, graphic, distance):
+def run_function(simulation_time, time_period, noise_deviation, nest_size, paradigm, timer, radius, food, ratio, trial, graphic):
 
     ''' Initialisation '''
 
@@ -430,7 +363,8 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             ALT_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_HD"])] = 0
             
         # Initialise food sources
-        food_list = initialise_food(paradigm, nest_size, food, radius, distance)
+        food_list = initialise_food(paradigm, nest_size, food, radius)
+        print(food_list)
 
         # Time loop
         for i in range(simulation_time + heating):
@@ -456,19 +390,6 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             # Introduce goal directions to PFN neurons 
             if paradigm == "Simple double goals" and i > heating:
                 Act.iloc[i, NEURON_IND["IND_PFN"]] = generate_goal(ratio, sin_param)
-
-            # Implement reward to FBtR neurons
-            if paradigm == "Experimental bee v1" and i>heating:
-                visible_food, closest_food, maximal_distance = insect_vision((Df.loc[i,"X"],Df.loc[i,"Y"]), Df.loc[i,"Orientation"], food_list)
-                for v in visible_food:
-                    Act.iloc[i, NEURON_IND["IND_FBtR"+str(v+1)]] = [0.5] * 16
-
-                # Implement distance to FBtD neurons
-                Act.iloc[i, NEURON_IND["IND_FBtD"]] = [closest_food[1]/maximal_distance*0.8] * 16
-
-                # Path integration to last seen food source
-                if visible_food:
-                    FBt_gate = Act.iloc[i, NEURON_IND["IND_HD"]]
 
 
             # Check if the agent has reached food depending on the paradigm
@@ -500,10 +421,6 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
 
             elif Df.loc[i,"Food"] == 1:
                 
-                NOISE_MAT = np.copy(CON_MAT)
-                to_noise = NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])]
-                NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])] = NOISE_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_PFN"])] * ((np.random.rand(to_noise.shape[0], to_noise.shape[1])*.4)+.8)
-
                 # Update new activity with complete connectivity matrix
                 Act.iloc[i+1] = linear_activation(np.dot(CON_MAT, Act.iloc[i]))
 
@@ -511,10 +428,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             Df.loc[i+1,"Rotation"] = (Act.iloc[i+1, Act.columns.get_loc("PFL1"):Act.columns.get_loc("PFL8") + 1].sum() - Act.iloc[i+1, Act.columns.get_loc("PFL9"):Act.columns.get_loc("PFL16") + 1].sum()) * 10
 
             # Update Orientation and position
-            if paradigm != "Debug rotation":
-                Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
-            elif i > int(heating + simulation_time/2):
-                Df.loc[i+1, "Orientation"] = noise_deviation
+            Df.loc[i+1, "Orientation"] = update_orientation(Df.loc[i,"Orientation"],Df.loc[i+1,"Rotation"], noise_deviation)
             if i >= heating:
                 new_x, new_y = update_position(Df.loc[i,"X"],Df.loc[i,"Y"],Df.loc[i,"Speed"],Df.loc[i+1,"Orientation"])
                 Df.loc[i+1, "X"] = new_x
