@@ -18,8 +18,10 @@ import seaborn as sns
 ## ----- Import connectivity matrix and neuron IDs
 def import_connectivity(paradigm):
     # Get path depending on paradigm
-    if paradigm == "Simple double goals":
-        path = "Connectivity_matrices/Simplified_connectivity_matrices.xlsx"
+    if paradigm == "Trial A: 1 PFN + 1 goal":
+        path = "Connectivity_matrices\Trial_A_matrices.xlsx"
+    elif paradigm == "Trial B: 1 PFN + 2 goal":
+        path = "Connectivity_matrices\Trial_B_matrices.xlsx"
     else:
         path = "Connectivity_matrices/Theoretical_connectivity_matrices.xlsx"
     # Open Excel sheets
@@ -44,6 +46,9 @@ def get_neuron_index(ids_list, food):
         "IND_PEG": [i for i, element in enumerate(ids_list) if "PEG" in element],
         "IND_PEN": [i for i, element in enumerate(ids_list) if "PEN" in element],
         "IND_D7": [i for i, element in enumerate(ids_list) if "d7-" in element or "D7-" in element],
+        "IND_G": [i for i, element in enumerate(ids_list) if "G-" in element],
+        "IND_GA": [i for i, element in enumerate(ids_list) if "GA-" in element],
+        "IND_GB": [i for i, element in enumerate(ids_list) if "GB-" in element],
         "IND_PFN": [i for i, element in enumerate(ids_list) if "PFN" in element],
         "IND_PFNm": [i for i, element in enumerate(ids_list) if "PFNm" in element],
         "IND_HD": [i for i, element in enumerate(ids_list) if "hd" in element or "hD" in element],
@@ -108,7 +113,7 @@ def compare_headings(previous_heading, new_heading):
 
 
 ## ----- Generate goal directions
-def generate_goal(ratio, param):
+def generate_goal(ratio, param, position):
     # Generate sinusoidal shape
     x = range(16)
     a = param[0]
@@ -117,14 +122,10 @@ def generate_goal(ratio, param):
     d = param[3]
     y = a * np.sin(b * (x + c)) + d
     # Adjust ratio
-    goal1 = list(y * ratio)
-    goal2 = list(y * (1-ratio))
-    # Adjust position (goal1 at 7, goal2 at 5)
-    while max(goal1) != goal1[6]:
-        goal1.append(goal1.pop(0))
-    while max(goal2) != goal2[4]:
-        goal2.append(goal2.pop(0))
-    goal = [goal1[i] + goal2[i] for i in range(len(goal1))]
+    goal = list(y * ratio)
+    # Adjust position (goal1 at 4, goal2 at 2)
+    while max(goal) != goal[position-1]:
+        goal.append(goal.pop(0))
     final_goal = [x if x >= 0 else 0 for x in goal]
     return final_goal
 
@@ -245,7 +246,7 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
     # Check paradigm for border representation
-    if paradigm == "Till border exploration" or paradigm == "Simple double goals":
+    if paradigm in ["Till border exploration","Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
     # Check paradigm for food source representation
@@ -254,9 +255,15 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
             food_source = plt.Circle((-food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
     # Check paradigm for goal directions
-    if paradigm == "Simple double goals":
-        plt.scatter(-radius, 0, color = "orange")
-        plt.scatter(0, radius, color="orange")
+    if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
+        goal1 = np.deg2rad((4-1)*45)
+        goal2 = np.deg2rad((2-1)*45)
+        x1 = 200 * np.cos(goal1)
+        y1 = 200 * np.sin(goal1)
+        x2 = 200 * np.cos(goal2)
+        y2 = 200 * np.sin(goal2)
+        plt.scatter(y1, -x1, color = "orange")
+        plt.scatter(y2, -x2, color="orange")
     # plot the graph
     plt.xlabel("X-coordinate", fontsize=16)
     plt.ylabel("Y-coordinate", fontsize=16)
@@ -364,7 +371,6 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             
         # Initialise food sources
         food_list = initialise_food(paradigm, nest_size, food, radius)
-        print(food_list)
 
         # Time loop
         for i in range(simulation_time + heating):
@@ -381,15 +387,19 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             expected_heading.iloc[i] = real_orientation * 2
 
             # Update TS activity input
-            Act.loc[i, "TS"] = Df.loc[i, "Speed"]
+            if paradigm in ["Timed exploration", "Till border exploration", "Food seeking"]:
+                Act.loc[i, "TS"] = Df.loc[i, "Speed"]
 
             # Update TR activity input
             if i>5:
                 Act.loc[i, "TRl"], Act.loc[i, "TRr"] = compare_headings(Df.loc[i-1, "Orientation"], Df.loc[i, "Orientation"])
 
-            # Introduce goal directions to PFN neurons 
-            if paradigm == "Simple double goals" and i > heating:
-                Act.iloc[i, NEURON_IND["IND_PFN"]] = generate_goal(ratio, sin_param)
+            # Introduce goal directions to goal neurons 
+            if paradigm == "Trial A: 1 PFN + 1 goal" and i > heating:
+                Act.iloc[i, NEURON_IND["IND_G"]] = generate_goal(1, sin_param, 4)
+            if paradigm == "Trial B: 1 PFN + 2 goal" and i > heating:
+                Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, sin_param, 4)
+                Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal(1-ratio, sin_param, 2)
 
 
             # Check if the agent has reached food depending on the paradigm
@@ -410,7 +420,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                             Df.loc[i:,"Food"] = 1
 
                 # Paradigm 4
-                elif paradigm == "Simple double goals":
+                elif paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
                     Df.loc[i:,"Food"] = 1
 
             # Update activity vector depending on the inner state
@@ -465,7 +475,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 break
 
             # Stop simulating if the agent has reached the end of the paradigm
-            if paradigm == "Simple double goals" and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
+            if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"] and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
                 Df = Df.iloc[:i+1,:]
                 break
 

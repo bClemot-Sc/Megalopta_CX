@@ -48,7 +48,19 @@ def show_parameters(*args):
         nest_label.grid(row=3, column=0, pady=20, sticky="w", padx=70)
         nest_entry.grid(row=3, column=1, sticky="ew", padx=30)
 
-    elif selected_option == "Simple double goals":
+    elif selected_option == "Trial A: 1 PFN + 1 goal":
+        timer_label.grid_forget()
+        timer_entry.grid_forget()
+        food_label.grid_forget()
+        food_entry.grid_forget()
+        nest_label.grid_forget()
+        nest_entry.grid_forget()
+        radius_label.grid(row=2, column=0, pady=20, sticky="w", padx=70)
+        radius_entry.grid(row=2, column=1, sticky="ew", padx=30)
+        ratio_label.grid_forget()
+        ratio_entry.grid_forget()
+
+    elif selected_option == "Trial B: 1 PFN + 2 goal":
         timer_label.grid_forget()
         timer_entry.grid_forget()
         food_label.grid_forget()
@@ -125,7 +137,7 @@ def run_simulation():
             k+=1
 
     RADIUS = 200
-    if PARADIGM == "Till border exploration":
+    if PARADIGM in ["Till border exploration", "Trial A: 1 PFN + 1 goal", "Trial B: 1 PFN + 2 goal"]:
         try:
             RADIUS = float(radius_entry.get())
             if not 0.0 <= RADIUS:
@@ -138,7 +150,7 @@ def run_simulation():
             k+=1 
     
     FOOD = 0
-    if PARADIGM in ["Food seeking"]:
+    if PARADIGM == "Food seeking":
         try:
             FOOD = int(food_entry.get())
             if not 0.0 <= FOOD:
@@ -151,7 +163,7 @@ def run_simulation():
             k+=1       
 
     RATIO = 0.5
-    if PARADIGM == "Simple double goals":
+    if PARADIGM == "Trial B: 1 PFN + 2 goal":
         try:
             RATIO = float(ratio_entry.get())
             if not 0.0 <= RATIO <= 1.0:
@@ -270,7 +282,7 @@ if __name__ == "__main__":
     # Paradigm menu
     paradigm_var = ctk.StringVar(right_frame)
     paradigm_var.set("Timed exploration")
-    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Simple double goals"])
+    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Trial A: 1 PFN + 1 goal" ,"Trial B: 1 PFN + 2 goal"])
     paradigm_menu.grid(row=1, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters
