@@ -20,8 +20,24 @@ def import_connectivity(paradigm):
     # Get path depending on paradigm
     if paradigm == "Trial A: 1 PFN + 1 goal":
         path = "Connectivity_matrices\Trial_A_matrices.xlsx"
-    elif paradigm == "Trial B: 1 PFN + 2 goal":
+    elif paradigm == "Trial B: 1 PFN + 2 goals":
         path = "Connectivity_matrices\Trial_B_matrices.xlsx"
+    elif paradigm == "Trial C: 2 PFNs + 2 goals":
+        path = "Connectivity_matrices\Trial_C_matrices.xlsx"
+    elif paradigm == "Test 1: 2hDs":
+        path = "Connectivity_matrices\Test_1_matrices.xlsx"
+    elif paradigm == "Test 2: 2hDs v.2":
+        path = "Connectivity_matrices\Test_2_matrices.xlsx"
+    elif paradigm == "Test 3: 2hDs v.3":
+        path = "Connectivity_matrices\Test_3_matrices.xlsx"
+    elif paradigm == "Test 4: 1hD":
+        path = "Connectivity_matrices/Test_4_matrices.xlsx"
+    elif paradigm == "Test 5: 2hDs + Plasticity":
+        path = "Connectivity_matrices\Test_5_matrices.xlsx"
+    elif paradigm == "Test 6: 3 goals + Plasticity":
+        path = "Connectivity_matrices\Test_6_matrices.xlsx"
+    elif paradigm == "Test 7: 2 goals + PI":
+        path = "Connectivity_matrices\Test_7_matrices.xlsx"
     else:
         path = "Connectivity_matrices/Theoretical_connectivity_matrices.xlsx"
     # Open Excel sheets
@@ -49,9 +65,19 @@ def get_neuron_index(ids_list, food):
         "IND_G": [i for i, element in enumerate(ids_list) if "G-" in element],
         "IND_GA": [i for i, element in enumerate(ids_list) if "GA-" in element],
         "IND_GB": [i for i, element in enumerate(ids_list) if "GB-" in element],
+        "IND_GC": [i for i, element in enumerate(ids_list) if "GC-" in element],
         "IND_PFN": [i for i, element in enumerate(ids_list) if "PFN" in element],
         "IND_PFNm": [i for i, element in enumerate(ids_list) if "PFNm" in element],
+        "IND_PFNh": [i for i, element in enumerate(ids_list) if "PFNh" in element],
+        "IND_PFNa": [i for i, element in enumerate(ids_list) if "PFNa" in element],
+        "IND_PFNb": [i for i, element in enumerate(ids_list) if "PFNb" in element],
         "IND_HD": [i for i, element in enumerate(ids_list) if "hd" in element or "hD" in element],
+        "IND_HDA": [i for i, element in enumerate(ids_list) if "hDa" in element ],
+        "IND_HDB": [i for i, element in enumerate(ids_list) if "hDb" in element ],
+        "IND_HDC": [i for i, element in enumerate(ids_list) if "hDc" in element ],
+        "IND_HDH": [i for i, element in enumerate(ids_list) if "hDh" in element ],
+        "IND_HDPIA": [i for i, element in enumerate(ids_list) if "hDpiA" in element ],
+        "IND_HDPIB": [i for i, element in enumerate(ids_list) if "hDpiB" in element ],
         "IND_FBtR": [i for i, element in enumerate(ids_list) if "FBtR" in element],
         "IND_PFNc": [i for i, element in enumerate(ids_list) if "PFNc" in element],
         "IND_FBtD": [i for i, element in enumerate(ids_list) if "FBtD" in element],
@@ -114,19 +140,24 @@ def compare_headings(previous_heading, new_heading):
 
 ## ----- Generate goal directions
 def generate_goal(ratio, param, position):
-    # Generate sinusoidal shape
-    x = range(16)
-    a = param[0]
-    b = param[1]
-    c = param[2]
-    d = param[3]
-    y = a * np.sin(b * (x + c)) + d
-    # Adjust ratio
-    goal = list(y * ratio)
-    # Adjust position (goal1 at 4, goal2 at 2)
+    # # Generate sinusoidal shape
+    # x = range(16)
+    # a = param[0]
+    # b = param[1]
+    # c = param[2]
+    # d = param[3]
+    # y = a * np.sin(b * (x + c)) + d
+    # # Adjust ratio
+    goal = [0.2,0.5,0.8,0.5,0.2,0,0,0, 0.2,0.5,0.8,0.5,0.2,0,0,0]
+    # Adjust position
     while max(goal) != goal[position-1]:
         goal.append(goal.pop(0))
-    final_goal = [x if x >= 0 else 0 for x in goal]
+    goal = [x if x >= 0 else 0 for x in goal]
+    final_goal = []
+    for elem in goal:
+        if elem == max(goal):
+            final_goal.append(elem*ratio)
+        else: final_goal.append(elem*ratio)
     return final_goal
 
 
@@ -240,30 +271,50 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     # Initial time index
     initial_time = 0
     # Plot the agent journey
-    line0, = ax.plot(-Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
-    line1, = ax.plot(-Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
+    line0, = ax.plot(Df[Df["Food"] == 0]["Y"], -Df[Df["Food"] == 0]["X"], linestyle="-", color="cyan")
+    line1, = ax.plot(Df[Df["Food"] == 1]["Y"], -Df[Df["Food"] == 1]["X"], linestyle="-", color="pink")
     # Plot the nest size
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
     # Check paradigm for border representation
-    if paradigm in ["Till border exploration","Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
+    if paradigm in ["Till border exploration","Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity"]:
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
     # Check paradigm for food source representation
     if paradigm == "Food seeking":
         for f in range(len(food_list)):
-            food_source = plt.Circle((-food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
+            food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
     # Check paradigm for goal directions
-    if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
-        goal1 = np.deg2rad((4-1)*45)
-        goal2 = np.deg2rad((2-1)*45)
+    if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity"]:
+        goal1 = np.deg2rad((6-1)*45)
+        goal2 = np.deg2rad((8-1)*45)
         x1 = 200 * np.cos(goal1)
         y1 = 200 * np.sin(goal1)
         x2 = 200 * np.cos(goal2)
         y2 = 200 * np.sin(goal2)
-        plt.scatter(y1, -x1, color = "orange")
-        plt.scatter(y2, -x2, color="orange")
+        plt.scatter(-y1, -x1, color = "orange")
+        plt.scatter(-y2, -x2, color="orange")
+    elif paradigm == "Test 6: 3 goals + Plasticity":
+        goal1 = np.deg2rad((8-1)*45)
+        goal2 = np.deg2rad((4-1)*45)
+        goal3 = np.deg2rad((5-1)*45)
+        x1 = 200 * np.cos(goal1)
+        y1 = 200 * np.sin(goal1)
+        x2 = 200 * np.cos(goal2)
+        y2 = 200 * np.sin(goal2)
+        x3 = 200 * np.cos(goal3)
+        y3 = 200 * np.sin(goal3)
+        plt.scatter(-y1, -x1, color = "orange")
+        plt.scatter(-y2, -x2, color="orange")
+        plt.scatter(-y3, -x3, color="orange")
+    elif paradigm == "Test 7: 2 goals + PI":
+        goal1 = np.deg2rad((6-1)*45)
+        goal2 = np.deg2rad((8-1)*45)
+        x1 = 200 * np.cos(goal1)
+        y1 = 200 * np.sin(goal1)
+        x2 = 400 * np.cos(goal2)
+        y2 = 400 * np.sin(goal2)
     # plot the graph
     plt.xlabel("X-coordinate", fontsize=16)
     plt.ylabel("Y-coordinate", fontsize=16)
@@ -277,11 +328,11 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     def update(val):
         time_index = int(time_slider.val)
         if time_index < shift:
-            line0.set_data(-Df["Y"][:time_index], -Df["X"][:time_index])
+            line0.set_data(Df["Y"][:time_index], -Df["X"][:time_index])
             line1.set_data(0,0)
         else:
-            line0.set_data(-Df["Y"][:shift], -Df["X"][:shift])
-            line1.set_data(-Df["Y"][shift:time_index], -Df["X"][shift:time_index])
+            line0.set_data(Df["Y"][:shift], -Df["X"][:shift])
+            line1.set_data(Df["Y"][shift:time_index], -Df["X"][shift:time_index])
         fig.canvas.draw_idle()
     # Attach the update function to the slider
     time_slider.on_changed(update)
@@ -309,15 +360,29 @@ def sinusoid_plot(data, param):
     sns.lineplot(y)
 
 
+## ----- Compute circular median
+def circ_median(angles):
+    angles = np.asarray(angles)
+    # Compute pairwise angular differences
+    diffs = np.abs(np.subtract.outer(angles, angles))
+    # Ensure we account for the circular nature of the data
+    diffs = np.minimum(diffs, 2*np.pi - diffs)
+    # Sum the differences for each angle
+    sum_diffs = np.sum(diffs, axis=1)
+    # Find the angle that minimizes the sum of differences
+    median_idx = np.argmin(sum_diffs)
+    return angles[median_idx]
+
+
 ## ----- Circular plot function
 def circular_plot(data, trial):
     # Get angle values
     angles = []
     for t in range(trial):
-        angles.append(get_angle((0,0),(-data.iloc[-1, t * 2 + 1],-data.iloc[-1, t * 2]))+90)
+        angles.append(get_angle((0,0),(data.iloc[-1, t * 2 + 1],-data.iloc[-1, t * 2]))+90)
     angles_radians = np.radians(angles)
     # Compute circular mean
-    mean_angle = circmean(angles_radians)
+    mean_angle = circ_median(angles_radians)
     # Compute circular standard deviation
     std_angle = circstd(angles_radians)
     # Create a circular plot
@@ -368,6 +433,12 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
         if paradigm in ["Timed exploration", "Till border exploration", "Food seeking"]:
             ALT_MAT = np.copy(CON_MAT)
             ALT_MAT[np.ix_(NEURON_IND["IND_PFL"],NEURON_IND["IND_HD"])] = 0
+
+        # Create alternative matrices for paradigm Test 7
+        if paradigm == "Test 7: 2 goals + PI":
+
+            # Exploration of first goal
+            
             
         # Initialise food sources
         food_list = initialise_food(paradigm, nest_size, food, radius)
@@ -396,11 +467,95 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
 
             # Introduce goal directions to goal neurons 
             if paradigm == "Trial A: 1 PFN + 1 goal" and i > heating:
-                Act.iloc[i, NEURON_IND["IND_G"]] = generate_goal(1, sin_param, 4)
-            if paradigm == "Trial B: 1 PFN + 2 goal" and i > heating:
-                Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, sin_param, 4)
-                Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal(1-ratio, sin_param, 2)
+                Act.iloc[i, NEURON_IND["IND_G"]] = generate_goal(1, None, 6)
+            if paradigm == "Trial B: 1 PFN + 2 goals" and i > heating:
+                Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, None, 6)
+                Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal((1-ratio), None, 8)
+            if paradigm in ["Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity"] and i > heating:
+                Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, None, 6)
+                Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal((1-ratio), None, 8)
+            if paradigm == "Test 6: 3 goals + Plasticity":
+                Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio[0], None, 8)
+                Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal(ratio[1], None, 4)
+                Act.iloc[i, NEURON_IND["IND_GC"]] = generate_goal((1-ratio[0]-ratio[1]), None, 5)
 
+            # Introduce Plasticity for hDelta connections
+            if paradigm == "Test 5: 2hDs + Plasticity" and i > heating:
+                list_hda = NEURON_IND["IND_HDA"][:]
+                half1_hda = list_hda[:(len(list_hda)//2)]
+                half2_hda = list_hda[(len(list_hda)//2):]
+                list_hdb = NEURON_IND["IND_HDB"][:]
+                half1_hdb = list_hdb[:(len(list_hdb)//2)]
+                half2_hdb = list_hdb[(len(list_hdb)//2):]
+                for a1 in half1_hda:
+                    for b1 in half1_hdb:
+                        difference = -Act.iloc[i, a1] - CON_MAT[b1, a1]
+                        CON_MAT[b1, a1] += difference
+                for a2 in half2_hda:
+                    for b2 in half2_hdb:
+                        difference = -Act.iloc[i, a2] - CON_MAT[b2, a2]
+                        CON_MAT[b2, a2] += difference
+                for b1 in half1_hdb:
+                    for a1 in half1_hda:
+                        difference = -Act.iloc[i, b1] - CON_MAT[a1, b1]
+                        CON_MAT[a1, b1] += difference
+                for b2 in half2_hdb:
+                    for a2 in half2_hda:
+                        difference = -Act.iloc[i, b2] - CON_MAT[a2, b2]
+                        CON_MAT[a2, b2] += difference
+
+            if paradigm == "Test 6: 3 goals + Plasticity" and i > heating:
+                list_hda = NEURON_IND["IND_HDA"][:]
+                half1_hda = list_hda[:(len(list_hda)//2)]
+                half2_hda = list_hda[(len(list_hda)//2):]
+                list_hdb = NEURON_IND["IND_HDB"][:]
+                half1_hdb = list_hdb[:(len(list_hdb)//2)]
+                half2_hdb = list_hdb[(len(list_hdb)//2):]
+                list_hdc = NEURON_IND["IND_HDC"][:]
+                half1_hdc = list_hdc[:(len(list_hdc)//2)]
+                half2_hdc = list_hdc[(len(list_hdc)//2):]
+                for a1 in half1_hda:
+                    for b1 in half1_hdb:
+                        difference = -Act.iloc[i, a1] - CON_MAT[b1, a1]
+                        CON_MAT[b1, a1] += difference
+                    for c1 in half1_hdc:
+                        difference = -Act.iloc[i, a1] - CON_MAT[c1, a1]
+                        CON_MAT[c1, a1] += difference
+                for a2 in half2_hda:
+                    for b2 in half2_hdb:
+                        difference = -Act.iloc[i, a2] - CON_MAT[b2, a2]
+                        CON_MAT[b2, a2] += difference
+                    for c2 in half2_hdc:
+                        difference = -Act.iloc[i, a2] - CON_MAT[c2, a2]
+                        CON_MAT[c2, a2] += difference
+                for b1 in half1_hdb:
+                    for a1 in half1_hda:
+                        difference = -Act.iloc[i, b1] - CON_MAT[a1, b1]
+                        CON_MAT[a1, b1] += difference
+                    for c1 in half1_hdc:
+                        difference = -Act.iloc[i, b1] - CON_MAT[c1, b1]
+                        CON_MAT[c1, b1] += difference
+                for b2 in half2_hdb:
+                    for a2 in half2_hda:
+                        difference = -Act.iloc[i, b2] - CON_MAT[a2, b2]
+                        CON_MAT[a2, b2] += difference
+                    for c2 in half2_hdc:
+                        difference = -Act.iloc[i, b2] - CON_MAT[c2, b2]
+                        CON_MAT[c2, b2] += difference
+                for c1 in half1_hdc:
+                    for a1 in half1_hda:
+                        difference = -Act.iloc[i, c1] - CON_MAT[a1, c1]
+                        CON_MAT[a1, c1] += difference
+                    for b1 in half1_hdb:
+                        difference = -Act.iloc[i, c1] - CON_MAT[b1, c1]
+                        CON_MAT[b1, c1] += difference
+                for c2 in half2_hdc:
+                    for a2 in half2_hda:
+                        difference = -Act.iloc[i, c2] - CON_MAT[a2, c2]
+                        CON_MAT[a2, c2] += difference
+                    for b2 in half2_hdb:
+                        difference = -Act.iloc[i, c2] - CON_MAT[b2, c2]
+                        CON_MAT[b2, c2] += difference
 
             # Check if the agent has reached food depending on the paradigm
             if Df.loc[i,"Food"] == 0:
@@ -420,7 +575,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                             Df.loc[i:,"Food"] = 1
 
                 # Paradigm 4
-                elif paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"]:
+                elif paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity"]:
                     Df.loc[i:,"Food"] = 1
 
             # Update activity vector depending on the inner state
@@ -444,30 +599,30 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 Df.loc[i+1, "X"] = new_x
                 Df.loc[i+1, "Y"] = new_y
 
-            # Get sinusoid d7 shape after heating
-            if i == heating:
-                sin_list = []
+            # # Get sinusoid d7 shape after heating
+            # if i == heating:
+            #     sin_list = []
 
-                # Copy the dataframe for plotting
-                centred_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
+            #     # Copy the dataframe for plotting
+            #     centred_d7 = Act.iloc[:(heating), Act.columns.get_loc("d7-1"):Act.columns.get_loc("d7-16") + 1].copy()
 
-                # Iterate over the whole heating activity Dataframe
-                for j in range(4,heating):
+            #     # Iterate over the whole heating activity Dataframe
+            #     for j in range(4,heating):
 
-                    # Normalize the dataframe for plotting
-                    d7_list = centred_d7.iloc[j,:].tolist()
-                    while max(d7_list) != d7_list[3]:
-                        d7_list.append(d7_list.pop(0))
-                    centred_d7.iloc[j,:] = d7_list
+            #         # Normalize the dataframe for plotting
+            #         d7_list = centred_d7.iloc[j,:].tolist()
+            #         while max(d7_list) != d7_list[3]:
+            #             d7_list.append(d7_list.pop(0))
+            #         centred_d7.iloc[j,:] = d7_list
 
-                r_squared = 1
-                while r_squared >= 1:
+            #     r_squared = 1
+            #     while r_squared >= 1:
 
-                    # Fit the sinusoid function
-                    sin_param = fit_sinusoid(centred_d7.iloc[4:,:].median())
+            #         # Fit the sinusoid function
+            #         sin_param = fit_sinusoid(centred_d7.iloc[4:,:].median())
 
-                    # compute r squared value
-                    r_squared = sinusoid_r_squared(centred_d7.iloc[4:,:].median(), sin_param)
+            #         # compute r squared value
+            #         r_squared = sinusoid_r_squared(centred_d7.iloc[4:,:].median(), sin_param)
 
             # Stop simulation when the agent has returned to the nest
             if euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) < nest_size and Df.loc[i,"Food"] == 1:
@@ -475,7 +630,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 break
 
             # Stop simulating if the agent has reached the end of the paradigm
-            if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goal"] and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
+            if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity"] and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
                 Df = Df.iloc[:i+1,:]
                 break
 
@@ -492,6 +647,10 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     Df.to_csv("Saved_results/Agent_dataframe.csv", sep="\t", index=False) # Only last one
     trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="\t", index=False)
 
+
+    crashtest = pd.DataFrame(CON_MAT)
+    crashtest.to_excel('crashtest.xlsx', index=False, header=False)
+
     # Graphical output
     if graphic[0]==1:
         activity_heatmap(Act) # Only last one
@@ -502,3 +661,4 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     if graphic[3]==1:
         sinusoid_plot(centred_d7.iloc[4:,:], sin_param) # Only last one
     plt.show()
+

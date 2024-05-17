@@ -3,9 +3,9 @@
 
 
 ## ----- VARIABLES
-threshold = 20 # Integer
+threshold = 3 # Integer
 direction = "None" # "None", "Toward_PFL", "From_PFL"
-plot_decision = ["Dendrogram", "Ranking"] # "Network" and/ or "Dendrogram" and/or "Ranking"
+plot_decision = ["Dendrogram"] # "Network" and/ or "Dendrogram" and/or "Ranking"
 
 ## ----- Import packages
 import csv
@@ -16,7 +16,7 @@ import networkx as nx
 from netgraph import Graph
 import os
 import pandas as pd
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -182,6 +182,59 @@ if "Dendrogram" in plot_decision:
     plt.title('Hierarchical Clustering Dendrogram')
     plt.xlabel('Distance')
     plt.ylabel('Node')
+    plt.show()
+    # Determine clusters using a cutoff distance
+    clusters = fcluster(linkage_matrix, 0.75, criterion='distance')
+    mapping = {}
+    for i in range(len(clusters)):
+        mapping[clusters[i]] = neurone_names[i]
+    # Create a new list using the mapping
+    cluster_names = [mapping[value] for value in clusters]
+    # Save this list just in case
+    dfsave = pd.DataFrame({'Clusters': clusters, 'Neurone names': neurone_names, 'Cluster names': cluster_names})
+    dfsave.to_csv('Drosophila_connectivity_data/cluster_names.csv', index=False)
+    # Extract the clusters and compute the size of each cluster
+    cluster_sizes = dict()
+    for i, cluster_id in enumerate(cluster_names):
+        if str(cluster_id) not in cluster_sizes:
+            cluster_sizes[str(cluster_id)] = 0
+        cluster_sizes[str(cluster_id)] += 1
+    # Compute the total sum of connections between nodes within each cluster
+    cluster_connections = dict()
+    for i in range(len(cluster_names)):
+        for j in range(len(cluster_names)):
+            cluster1 = cluster_names[i]
+            cluster2 = cluster_names[j]
+            if (str(cluster1),str(cluster2)) not in cluster_connections:
+                cluster_connections[(str(cluster1), str(cluster2))] = 0
+            cluster_connections[(str(cluster1), str(cluster2))] += adjacency_matrix[i, j]
+    # Create a networkx graph
+    G = nx.Graph()
+    # Add nodes (clusters) to the graph with size proportional to the number of individuals in each cluster
+    for cluster_id, size in cluster_sizes.items():
+        G.add_node(cluster_id, size=size)
+    # Add edges between clusters with width proportional to the total sum of connections between them
+    for cluster, weight in cluster_connections.items():
+        if weight == 0:
+            continue
+        G.add_edge(cluster[0], cluster[1], weight=weight)
+    # Plot the network
+    plt.figure(figsize=(10, 8))
+    nx.draw_networkx(G, pos = nx.spring_layout(G), with_labels=True, 
+                node_size=[size * 10 for size in nx.get_node_attributes(G, 'size').values()], 
+                node_color='skyblue', 
+                font_size=10, 
+                font_color='black',
+                width=[d['weight'] * 0.001 for u, v, d in G.edges(data=True)],
+                edge_color='black',  # You can set edge color as per your preference
+                alpha=0.7,
+                arrows=True)
+    # Add node and edge values as labels
+    # node_labels = nx.get_node_attributes(G, 'size')
+    # nx.draw_networkx_labels(G, nx.spring_layout(G), labels=node_labels)
+    # edge_labels = nx.get_edge_attributes(G, 'weight')
+    # nx.draw_networkx_edge_labels(G, nx.spring_layout(G), edge_labels=edge_labels)
+    plt.title('Clusters as a Network')
     plt.show()
 
 # Adapt matrix input

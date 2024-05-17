@@ -5,6 +5,7 @@
 ## ----- Import packages
 import customtkinter as ctk
 import CX_Script
+from fractions import Fraction
 
 ## ----- Command functions
 
@@ -60,7 +61,7 @@ def show_parameters(*args):
         ratio_label.grid_forget()
         ratio_entry.grid_forget()
 
-    elif selected_option == "Trial B: 1 PFN + 2 goal":
+    elif selected_option in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI"]:
         timer_label.grid_forget()
         timer_entry.grid_forget()
         food_label.grid_forget()
@@ -86,6 +87,7 @@ def run_simulation():
     error6_label.grid_forget()
     error7_label.grid_forget()
     error8_label.grid_forget()
+    error9_label.grid_forget()
 
     # Check for inputs and issues
     try:
@@ -137,7 +139,7 @@ def run_simulation():
             k+=1
 
     RADIUS = 200
-    if PARADIGM in ["Till border exploration", "Trial A: 1 PFN + 1 goal", "Trial B: 1 PFN + 2 goal"]:
+    if PARADIGM in ["Till border exploration", "Trial A: 1 PFN + 1 goal", "Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI"]:
         try:
             RADIUS = float(radius_entry.get())
             if not 0.0 <= RADIUS:
@@ -163,7 +165,7 @@ def run_simulation():
             k+=1       
 
     RATIO = 0.5
-    if PARADIGM == "Trial B: 1 PFN + 2 goal":
+    if PARADIGM in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 7: 2 goals + PI"]:
         try:
             RATIO = float(ratio_entry.get())
             if not 0.0 <= RATIO <= 1.0:
@@ -174,6 +176,39 @@ def run_simulation():
             error7_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
             error=1
             k+=1 
+
+    if PARADIGM == "Test 6: 3 goals + Plasticity":
+        try:
+            ratios = ratio_entry.get()
+            ratios = ratios.split(',')
+            RATIO = [float(num) for num in ratios]
+            if len(RATIO) != 2:
+                error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                error=1
+                k+=1 
+            for ratio in RATIO:
+                if not 0.0 <= ratio <= 1.0:
+                    error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                    error=1
+                    k+=1 
+        except:
+            try:
+                ratios = ratio_entry.get()
+                ratios = ratios.split(',')
+                RATIO = [float(Fraction(num)) for num in ratios]
+                if len(RATIO) != 2:
+                    error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                    error=1
+                    k+=1 
+                for ratio in RATIO:
+                    if not 0.0 <= ratio <= 1.0:
+                        error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                        error=1
+                        k+=1
+            except:
+                error9_label.grid(row=8+k, column=0, columnspan=4,padx=50, pady=10)
+                error=1
+                k+=1 
 
     NEST = 0
     if PARADIGM in ["Timed exploration", "Till border exploration", "Food seeking"]:
@@ -201,7 +236,7 @@ def run_simulation():
 if __name__ == "__main__":
     # Configure theme
     ctk.set_default_color_theme("green")
-    # Call window
+    # Call windo
     root = ctk.CTk()
     root.after(0, lambda:root.state('zoomed'))
     root.title("CX simulation")
@@ -282,7 +317,21 @@ if __name__ == "__main__":
     # Paradigm menu
     paradigm_var = ctk.StringVar(right_frame)
     paradigm_var.set("Timed exploration")
-    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=["Timed exploration", "Till border exploration", "Food seeking", "Trial A: 1 PFN + 1 goal" ,"Trial B: 1 PFN + 2 goal"])
+    paradigm_menu = ctk.CTkOptionMenu(right_frame, variable=paradigm_var, values=[
+        "Timed exploration", 
+        "Till border exploration", 
+        "Food seeking", 
+        "Trial A: 1 PFN + 1 goal",
+        "Trial B: 1 PFN + 2 goals",
+        "Trial C: 2 PFNs + 2 goals",
+        "Test 1: 2hDs",
+        "Test 2: 2hDs v.2",
+        "Test 3: 2hDs v.3",
+        "Test 4: 1hD",
+        "Test 5: 2hDs + Plasticity",
+        "Test 6: 3 goals + Plasticity",
+        "Test 7: 2 goals + PI"
+        ])
     paradigm_menu.grid(row=1, column=1, sticky="ew", padx=30)
 
     # Paradigm parameters
@@ -350,6 +399,7 @@ if __name__ == "__main__":
     error6_label = ctk.CTkLabel(root, text="Nest size should be a positive float value.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error7_label = ctk.CTkLabel(root, text="Ratio value should be a float between 0 and 1.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
     error8_label = ctk.CTkLabel(root, text="Number of trials should be a positive integer", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
+    error9_label = ctk.CTkLabel(root, text="Ratio should be of two float values between 0 and 1, separated by a coma.", text_color="red", font=ctk.CTkFont(size=15, weight="bold"))
 
     # Run button
     run_button = ctk.CTkButton(root, text="Run simulation", command=run_simulation)
