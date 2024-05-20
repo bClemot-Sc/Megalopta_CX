@@ -22,7 +22,8 @@ paradigm_dict = {
     5 : "Test 2: 2hDs v.2",
     6 : "Test 3: 2hDs v.3",
     7 : "Test 4: 1hD",
-    8 : "Test 5: 2hDs + Plasticity"
+    8 : "Test 5: 2hDs + Plasticity",
+    9 : "Test 8: Reversed Decision"
 }
 
 
@@ -77,7 +78,7 @@ def circ_median(angles):
     return angles[median_idx]
 
 
-for PARADIGM_NUMBER in [8]:
+for PARADIGM_NUMBER in [9]:
     ## ------ Run simulation and generate data
     matplotlib.use('Agg')
     warnings.filterwarnings("ignore")
