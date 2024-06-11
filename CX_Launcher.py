@@ -61,7 +61,7 @@ def show_parameters(*args):
         ratio_label.grid_forget()
         ratio_entry.grid_forget()
 
-    elif selected_option in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision"]:
+    elif selected_option in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
         timer_label.grid_forget()
         timer_entry.grid_forget()
         food_label.grid_forget()
@@ -139,7 +139,7 @@ def run_simulation():
             k+=1
 
     RADIUS = 200
-    if PARADIGM in ["Till border exploration", "Trial A: 1 PFN + 1 goal", "Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision"]:
+    if PARADIGM in ["Till border exploration", "Trial A: 1 PFN + 1 goal", "Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
         try:
             RADIUS = float(radius_entry.get())
             if not 0.0 <= RADIUS:
@@ -165,7 +165,7 @@ def run_simulation():
             k+=1       
 
     RATIO = 0.5
-    if PARADIGM in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision"]:
+    if PARADIGM in ["Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 7: 2 goals + PI", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
         try:
             RATIO = float(ratio_entry.get())
             if not 0.0 <= RATIO <= 1.0:
@@ -331,7 +331,8 @@ if __name__ == "__main__":
         "Test 5: 2hDs + Plasticity",
         "Test 6: 3 goals + Plasticity",
         "Test 7: 2 goals + PI",
-        "Test 8: Reversed Decision"
+        "Test 8: Reversed Decision",
+        "Test 9: Reversed Decision v.2"
         ])
     paradigm_menu.grid(row=1, column=1, sticky="ew", padx=30)
 

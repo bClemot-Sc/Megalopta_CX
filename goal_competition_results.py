@@ -11,6 +11,7 @@ from scipy.stats import circmean, circstd
 import CX_Script
 import csv
 import warnings
+from tqdm import tqdm  # Add tqdm import
 
 
 ## ----- Select paradigm
@@ -23,13 +24,14 @@ paradigm_dict = {
     6 : "Test 3: 2hDs v.3",
     7 : "Test 4: 1hD",
     8 : "Test 5: 2hDs + Plasticity",
-    9 : "Test 8: Reversed Decision"
+    9 : "Test 8: Reversed Decision",
+    10 : "Test 9: Reversed Decision v.2"
 }
 
 
 ## ----- Parameters
 NOISE = 5
-TRIAL = 10
+TRIAL = 20
 
 ## ----- Function for normalising values
 def normalise_value(vector):
@@ -78,24 +80,24 @@ def circ_median(angles):
     return angles[median_idx]
 
 
-for PARADIGM_NUMBER in [9]:
+for PARADIGM_NUMBER in [10]:
     ## ------ Run simulation and generate data
     matplotlib.use('Agg')
     warnings.filterwarnings("ignore")
-    RATIOS = [round(i/10, 2) for i in range(0, 5)] + [round(0.4 + i/50, 2) for i in range(0, 11)] + [round(0.6 + i/10, 2) for i in range(0, 5)]
+    RATIOS = [round(i/10, 2) for i in range(0, 11)]
+    # RATIOS = [round(i/10, 2) for i in range(0, 5)] + [round(0.4 + i/50, 2) for i in range(0, 11)] + [round(0.6 + i/10, 2) for i in range(0, 5)]
     # RATIOS = [round(i/10, 2) for i in range(0, 4)] + [round(0.4 + i/50, 2) for i in range(0, 21)] + [round(0.9 + i/10, 2) for i in range(0, 2)]
     RATIOS = list(set(RATIOS))
     RATIOS.sort()
     list_ratios = []
-    for ratio in RATIOS:
+    for ratio in tqdm(RATIOS):  # Wrap the loop with tqdm
         CX_Script.run_function(500, 'Day', NOISE, 0, paradigm_dict[PARADIGM_NUMBER], 0, 200, 0, ratio, TRIAL, [0,0,1,0])
-        with open("Saved_results\last_goal_integration.csv", 'r') as csvfile:
+        with open("Saved_results/last_goal_integration.csv", 'r') as csvfile:
             csv_reader = csv.reader(csvfile)
             for row in csv_reader:
                 list_angles = row
         list_angles = [float(x) for x in list_angles]
         list_ratios.append(list_angles)
-        print(ratio,"ratio done!")
     RESULTS = np.array(list_ratios)
     RESULTS = RESULTS.transpose()
 
@@ -110,7 +112,7 @@ for PARADIGM_NUMBER in [9]:
     mean_angle = []
     std_angle = []
     for y in range(RESULTS.shape[1]):
-        mean_angle.append(np.degrees(circ_median(np.radians(RESULTS[:,y]))))
+        mean_angle.append(np.degrees(circmean(np.radians(RESULTS[:,y]))))
         std_angle.append(np.degrees(circstd(np.radians(RESULTS[:,y]))))
     mean_angle = normalise_value(mean_angle)
     std_angle = normalise_std(std_angle)

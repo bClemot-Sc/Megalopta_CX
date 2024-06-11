@@ -40,6 +40,8 @@ def import_connectivity(paradigm):
         path = "Connectivity_matrices\Test_7_matrices.xlsx"
     elif paradigm == "Test 8: Reversed Decision":
         path = "Connectivity_matrices\Test_8_matrices.xlsx"
+    elif paradigm == "Test 9: Reversed Decision v.2":
+        path = "Connectivity_matrices\Test_9_matrices.xlsx"
     else:
         path = "Connectivity_matrices/Theoretical_connectivity_matrices.xlsx"
     # Open Excel sheets
@@ -84,6 +86,8 @@ def get_neuron_index(ids_list, food):
         "IND_PFNc": [i for i, element in enumerate(ids_list) if "PFNc" in element],
         "IND_FBtD": [i for i, element in enumerate(ids_list) if "FBtD" in element],
         "IND_FC": [i for i, element in enumerate(ids_list) if "FC" in element],
+        "IND_GTA": [i for i, element in enumerate(ids_list) if "GTa" in element],
+        "IND_GTB": [i for i, element in enumerate(ids_list) if "GTb" in element],
         "IND_PFL": [i for i, element in enumerate(ids_list) if "PFL" in element]
     }
     for f in range(1,food+1):
@@ -282,7 +286,7 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
     nest = plt.Circle((0, 0), nest_size, color="yellow", alpha=0.5)
     ax.add_patch(nest)
     # Check paradigm for border representation
-    if paradigm in ["Till border exploration","Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision"]:
+    if paradigm in ["Till border exploration","Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
         border = plt.Circle((0, 0), radius, color="grey", fill=False)
         ax.add_patch(border)
     # Check paradigm for food source representation
@@ -291,7 +295,7 @@ def plot_stirring(Df, nest_size, food_list, paradigm, radius):
             food_source = plt.Circle((food_list[f][1], -food_list[f][0]), food_list[f][2], color="lightgreen", alpha=0.5)
             ax.add_patch(food_source)
     # Check paradigm for goal directions
-    if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision"]:
+    if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
         goal1 = np.deg2rad((6-1)*45)
         goal2 = np.deg2rad((8-1)*45)
         x1 = 200 * np.cos(goal1)
@@ -457,32 +461,40 @@ def matrix_plasticity(matrix, activity_df, neuron_index, goals_number, iteration
             half2_hdc = list_hdc[(len(list_hdc)//2):]
         for a1 in half1_hda:
             for b1 in half1_hdb:
-                difference = -activity_df.iloc[iteration, a1] - matrix[b1, a1]
+                difference = -(activity_df.iloc[iteration, a1]) - matrix[b1, a1] -0.2
                 matrix[b1, a1] += difference
+                if matrix[b1, a1] > 0 : matrix[b1, a1] = 0
+                if matrix[b1, a1] < -1 : matrix[b1, a1] = -1
             if goals_number == 3:
                 for c1 in half1_hdc:
                         difference = -activity_df.iloc[iteration, a1] - matrix[c1, a1]
                         matrix[c1, a1] += difference
         for a2 in half2_hda:
             for b2 in half2_hdb:
-                difference = -activity_df.iloc[iteration, a2] - matrix[b2, a2]
+                difference = -(activity_df.iloc[iteration, a2]) - matrix[b2, a2] - 0.2
                 matrix[b2, a2] += difference
+                if matrix[b2, a2] > 0 : matrix[b2, a2] = 0
+                if matrix[b2, a2] < -1 : matrix[b2, a2] = -1
             if goals_number == 3:
                 for c2 in half2_hdc:
                         difference = -activity_df.iloc[iteration, a2] - matrix[c2, a2]
                         matrix[c2, a2] += difference
         for b1 in half1_hdb:
             for a1 in half1_hda:
-                difference = -activity_df.iloc[iteration, b1] - matrix[a1, b1]
+                difference = -(activity_df.iloc[iteration, b1]) - matrix[a1, b1] + 0.2
                 matrix[a1, b1] += difference
+                if matrix[a1, b1] > 0 : matrix[a1, b1] = 0
+                if matrix[a1, b1] < -1 : matrix[a1, b1] = -1
             if goals_number == 3:
                 for c1 in half1_hdc:
                         difference = -activity_df.iloc[iteration, b1] - matrix[c1, b1]
                         matrix[c1, b1] += difference
         for b2 in half2_hdb:
             for a2 in half2_hda:
-                difference = -activity_df.iloc[iteration, b2] - matrix[a2, b2]
+                difference = -(activity_df.iloc[iteration, b2]) - matrix[a2, b2] + 0.2
                 matrix[a2, b2] += difference
+                if matrix[a2, b2] > 0 : matrix[a2, b2] = 0
+                if matrix[a2, b2] < -1 : matrix[a2, b2] = -1
             if goals_number == 3:
                 for c2 in half2_hdc:
                         difference = -activity_df.iloc[iteration, b2] - matrix[c2, b2]
@@ -600,7 +612,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             elif paradigm == "Trial B: 1 PFN + 2 goals" and i > heating:
                 Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, None, 6)
                 Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal((1-ratio), None, 8)
-            elif paradigm in ["Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision"] and i > heating:
+            elif paradigm in ["Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"] and i > heating:
                 Act.iloc[i, NEURON_IND["IND_GA"]] = generate_goal(ratio, None, 6)
                 Act.iloc[i, NEURON_IND["IND_GB"]] = generate_goal((1-ratio), None, 8)
             elif paradigm == "Test 6: 3 goals + Plasticity":
@@ -614,7 +626,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                     Act.iloc[i, NEURON_IND["IND_HDB"]] = generate_goal(1, None, 8)
 
             # Introduce Plasticity for hDelta connections
-            if paradigm in ["Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision"] and i > heating:
+            if paradigm in ["Test 5: 2hDs + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"] and i > heating:
                 CON_MAT = matrix_plasticity(CON_MAT, Act, NEURON_IND, 2, i)
 
             if paradigm == "Test 6: 3 goals + Plasticity" and i > heating:
@@ -623,6 +635,16 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
             if paradigm == "Test 7: 2 goals + PI" and i > heating:
                 if Df.loc[i,"Food"] == 4:
                     STEP5_MAT = matrix_plasticity(STEP5_MAT, Act, NEURON_IND, 2, i)
+
+            # Introduce plasticity for Gate neurons
+            if paradigm == "Test 9: Reversed Decision v.2" and i > heating:
+                for w in range(len(NEURON_IND["IND_HDA"])):
+                    if max(Act.iloc[i,NEURON_IND["IND_GTB"]]) > 0.01:
+                        # goal A part
+                        CON_MAT[NEURON_IND["IND_HDA"][w], NEURON_IND["IND_PFNa"][w]] = 1
+                    if max(Act.iloc[i,NEURON_IND["IND_GTA"]]) > 0.01:
+                        # Goal B part
+                        CON_MAT[NEURON_IND["IND_HDB"][w], NEURON_IND["IND_PFNb"][w]] = 1
 
             # Check if the agent has reached food depending on the paradigm
             if Df.loc[i,"Food"] == 0:
@@ -642,7 +664,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                             Df.loc[i:,"Food"] = 1
 
                 # Paradigm 4
-                elif paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision"]:
+                elif paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
                     Df.loc[i:,"Food"] = 1
 
             # Update food states for Test 7
@@ -666,6 +688,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 if Df.loc[i,"Food"] == 3:
                     if euclidean_distance(0, 0, Df.loc[i,"X"], Df.loc[i,"Y"]) < 40:
                         t +=1
+                        print('DING')
                         save = True
                         Df.loc[i:,"Food"] = 4
                 if Df.loc[i,"Food"] == 4:
@@ -743,11 +766,16 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
                 break
 
             # Stop simulating if the agent has reached the end of the paradigm
-            if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision"] and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
+            if paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"] and euclidean_distance(0,0,Df.loc[i+1, "X"],Df.loc[i+1, "Y"]) >= radius:
                 Df = Df.iloc[:i+1,:]
                 t += 1
                 save = True
                 break
+
+        # Prevent re-loop for basic paradigms
+        if not save and paradigm in ["Trial A: 1 PFN + 1 goal","Trial B: 1 PFN + 2 goals", "Trial C: 2 PFNs + 2 goals", "Test 1: 2hDs", "Test 2: 2hDs v.2", "Test 3: 2hDs v.3", "Test 4: 1hD", "Test 5: 2hDs + Plasticity", "Test 6: 3 goals + Plasticity", "Test 8: Reversed Decision", "Test 9: Reversed Decision v.2"]:
+            save = True
+            t +=1
 
         # Save results of the trial
         if save:
@@ -762,6 +790,7 @@ def run_function(simulation_time, time_period, noise_deviation, nest_size, parad
     Act.to_csv("Saved_results/Last_activity.csv", sep="\t", index=False) # Only last one
     Df.to_csv("Saved_results/Agent_dataframe.csv", sep="\t", index=False) # Only last one
     trial_df.to_csv("Saved_results/Trial_dataframe.csv", sep="\t", index=False)
+    np.savetxt('crashtest.csv', CON_MAT, delimiter=',')
 
     # Graphical output
     if graphic[0]==1:
